@@ -28,15 +28,18 @@ Pontos que condicionam diretamente esta demanda:
 - **Fatores:** saldo, volume de transações, frequência de transações, tempo de casa e KYC.
 - **Régua:** o time técnico propõe a régua inicial (abaixo), a ser validada por Risco/Crédito.
 - **Modos de operação:** os dois. (a) **Realtime**, consultável por serviços como liberação de crédito, com latência aceitável de **300 ms**; (b) **background**, recálculo **diário**.
-- **Moeda base:** **BRL**.
-- **Fatores econômicos internos do banco:** ficam **fora da primeira entrega** — o negócio ainda está validando quais serão. O job diário entra desde já, mas apenas com os cinco fatores de cliente; os fatores econômicos entram depois como componente adicional.
+- **Moeda base:** **BRL**, convertida pela **API de taxas de câmbio do Banco Central** (dataset "Taxas de câmbio — todos os boletins diários").
+- **Identidade do cliente:** será criado um **ID único de cliente**, referenciado pelas contas.
+- **Fatores econômicos internos do banco:** **fora desta implementação** e em aberto. O job diário entra com os cinco fatores de cliente; os fatores econômicos, se aprovados, entram depois como componente adicional.
 - **Backfill:** contas existentes usam como data de abertura a **data de implantação do risk score**.
 - **KYC:** será cadastrado no próprio `account-api`, e **opcional** nesta fase para clientes que ainda não o possuem.
-- **Acesso:** qualquer usuário com **role de admin** pode consultar.
+- **Acesso:** qualquer usuário com **role de admin** pode consultar. A criação dessa role está em aberto (chamado aberto pelo negócio junto ao time responsável) e é **pré-requisito para publicar a rota no gateway**.
 - **Bureau externo:** fora de escopo por enquanto.
 - **Exposição:** score **interno** apenas, não exposto ao cliente final.
 
-> **Atenção — não existem roles hoje.** `api-gateway/src/main/java/com/royal/reserve/bank/api/gateway/config/SecurityConfig.java` apenas valida a assinatura do token e exige `anyExchange().authenticated()`; não há nenhuma verificação de escopo, claim ou role em nenhum módulo. "Admin pode consultar" implica criar a claim de role no provedor de identidade (Auth0, conforme `spring.security.oauth2.resourceserver.jwt.jwk-set-uri` em `config-files/api-gateway.properties`) e passar o gateway a autorizar por ela — trabalho que não existe no sistema atual e que deve ser tratado como item próprio, não como detalhe do score.
+> **Atenção — não existem roles hoje.** `api-gateway/src/main/java/com/royal/reserve/bank/api/gateway/config/SecurityConfig.java` apenas valida a assinatura do token e exige `anyExchange().authenticated()`; não há nenhuma verificação de escopo, claim ou role em nenhum módulo. "Admin pode consultar" implica criar a claim de role no provedor de identidade (Auth0, conforme `spring.security.oauth2.resourceserver.jwt.jwk-set-uri` em `config-files/api-gateway.properties`) e passar o gateway a autorizar por ela. Item em aberto, fora do escopo desta implementação. **Enquanto não existir, o `risk-score-api` não deve ter rota publicada no gateway** — apenas chamada serviço-a-serviço via Eureka.
+
+> **Consequência do ID único de cliente na base legada.** Criar o ID resolve o modelo daqui para frente, mas não reconstrói o passado: como `accountHolderName` não é único (item 1), não há critério seguro para decidir se duas contas com o mesmo nome pertencem ao mesmo cliente. A proposta é atribuir **um cliente por conta existente** no backfill e tratar a unificação de titulares como esforço separado (conferência manual ou por documento, quando este passar a ser coletado). Efeito prático: clientes legados com mais de uma conta só passam a ser agregados de fato depois dessa unificação.
 
 ### Consequência direta: nenhum dos fatores pedidos existe hoje
 
@@ -64,10 +67,18 @@ Escala **0–1000, maior = mais risco**; faixas: **BAIXO 0–299**, **MÉDIO 300
 |---|---|---|
 | KYC | 30% | verificado e vigente = 0; incompleto/pendente = 500; **ausente = 500** (neutro nesta fase, ver abaixo); expirado = 1000 |
 | Tempo de casa | 20% | > 24 meses = 0; 6–24 meses = 400; < 6 meses = 1000; **cliente legado (data de abertura = data de implantação) = 400** |
-| Saldo agregado em BRL | 20% | ≥ R$ 50.000 = 0; entre R$ 1.000 e R$ 50.000 = interpolação linear; ≤ R$ 1.000 = 1000 |
+| Saldo agregado em BRL | 20% | ≥ R$ 50.000 = 0; entre R$ 1.000 e R$ 50.000 = interpolação linear; ≤ R$ 1.000 = 1000 (limiares aprovados pelo negócio) |
 | Comportamento transacional (90 dias) | 30% | 0 até 10 transações/mês e valor individual até 3× a mediana do próprio cliente; sobe linearmente a partir daí; ≥ 30 transações/mês **ou** transação ≥ 5× a mediana = 1000; cliente sem histórico = 500 |
 
 Todos os pesos e limiares devem ser parametrizáveis via Config Server (`config-files/`), não constantes em código, para permitir recalibração sem deploy. Cada score deve persistir os **fatores que o compuseram**, tanto para auditoria quanto porque score sem explicação não é acionável por Risco.
+
+### Conversão para BRL (API do Banco Central) — verificado
+
+A fonte indicada pelo negócio existe e atende, com duas ressalvas de desenho:
+
+- **Cobertura de moedas:** o endpoint OData de PTAX (`https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/Moedas`) devolve apenas 10 moedas (AUD, CAD, CHF, DKK, EUR, GBP, JPY, NOK, SEK, USD) — **HUF não está entre elas**, e há conta em HUF nos dados de teste (`AccountTestData.java`). Já o boletim diário de fechamento completo (`https://www4.bcb.gov.br/Download/fechamento/<AAAAMMDD>.csv`) traz a lista extensa, incluindo `HUF`. Portanto o serviço deve consumir o **boletim de fechamento completo**, não o endpoint restrito de PTAX.
+- **Dias sem cotação:** o boletim é publicado apenas em dias úteis. O serviço precisa persistir a última cotação conhecida e usá-la em fins de semana, feriados e em caso de indisponibilidade da API — nunca falhar o cálculo do score por causa do câmbio. Como a conversão só alimenta 20% do score e o rateio é diário, uma taxa de D-1 é aceitável; isso deve ser registrado junto dos fatores do score (taxa e data usadas), por auditoria.
+- **Rede:** é a **primeira dependência externa** do sistema; exige liberação de egresso, timeout e circuit breaker (o padrão Resilience4j já existe em `transaction-api`).
 
 **Duas consequências das decisões de backfill e de KYC opcional, que mudam a régua:**
 
@@ -132,10 +143,10 @@ Mesmo serviço da Abordagem B, sem consumo de eventos: o score é recalculado so
 - **Risco de dado, o principal:** os cinco fatores pedidos dependem de dados que não existem (tabela acima). A Fase 0 é o verdadeiro caminho crítico; qualquer cronograma que a ignore vai entregar score sem lastro.
 - **Contrato público:** incluir cliente, valor e timestamp em `TransactionRequest` afeta `postman/postman-collection.json` e qualquer consumidor externo. Exige campo opcional em transição ou versionamento de rota.
 - **Migração de dados:** contas existentes não têm `customerId`; o agrupamento conta→cliente da base legada não é dedutível com segurança, já que `accountHolderName` não é único (item 1) — homônimos seriam fundidos no mesmo cliente. O backfill precisa de critério do negócio ou de conferência manual.
-- **Câmbio:** a moeda base é BRL, mas as contas têm moedas próprias (item 5: EUR, GBP, HUF nos dados de teste) e **não existe nenhuma fonte de taxas no sistema**. Converter para BRL exige contratar/expor um serviço de câmbio, ou o componente de saldo fica inutilizável para clientes multimoeda. **Este é o item aberto mais concreto do desenho.**
+- **Câmbio:** resolvido com a API do BCB, mas passa a ser uma dependência externa com indisponibilidade possível e sem cotação em dias não úteis (ver seção de conversão). Mitigação: cache da última cotação + registro da taxa usada em cada score.
 - **Compliance / LGPD:** score de risco é dado pessoal com finalidade específica. Mesmo sendo interno, precisa de base legal, política de retenção, log de acesso e trilha dos fatores. **Validar com Jurídico/Privacidade antes de persistir score.**
 - **Discriminação algorítmica:** régua com peso alto em saldo e tempo de casa penaliza cliente novo e de baixa renda. Precisa de revisão por Risco/Crédito e de registro dos fatores de cada score. Recomenda-se rodar em modo *shadow* (calculando sem consumidor) antes de qualquer uso em decisão de crédito.
-- **Segurança:** o acesso restrito a admin **não é implementável no estado atual** — `SecurityConfig.java` não tem nenhuma noção de role. Enquanto essa claim não existir, publicar a rota no gateway torna o score visível a qualquer chamador autenticado; a alternativa provisória é não publicar a rota e permitir apenas chamada serviço-a-serviço via Eureka. Nota lateral: há um JWT hardcoded em `config-files/api-gateway.properties`, o que reforça que o ambiente atual não é produtivo.
+- **Segurança:** o acesso restrito a admin **não é implementável no estado atual** — `SecurityConfig.java` não tem nenhuma noção de role, e o item ficou em aberto. Até a role existir, a rota não deve ser publicada no gateway; publicá-la antes tornaria o score visível a qualquer chamador autenticado. Nota lateral: há um JWT hardcoded em `config-files/api-gateway.properties`, o que reforça que o ambiente atual não é produtivo.
 - **Latência do realtime:** os 300 ms só são sustentáveis com score materializado e cache. Qualquer desenho que agregue contas e consulte histórico transacional a cada chamada vai depender de duas chamadas de rede internas, e o `transaction-api` já opera com `TimeLimiter`/`Retry` de Resilience4j (`config-files/transaction-api.properties`: `timeout-duration=3s`, `max-attempts=3`) — ou seja, uma dependência que pode legitimamente levar segundos.
 - **Carga do job:** o recálculo em background varre todos os clientes; com `AccountService.getAllAccounts()` no formato atual (item 4), o job precisa de paginação própria em vez de reusar essa leitura.
 - **Ausência de CI:** sem workflow em `.github/`, a regressão depende de execução local de `mvn verify`.
@@ -147,17 +158,19 @@ Recomendo a **Abordagem B**, precedida da Fase 0 como épico próprio e prioriza
 ### Sequência sugerida
 
 1. **Fase 0 — modelo de dados:** `Customer` no `account-api` (com KYC opcional e data de abertura), `Account.customerId`, transação com cliente/valor/timestamp, evento Kafka enriquecido.
-2. **Role de admin** no provedor de identidade + autorização por role no gateway.
-3. **`risk-score-api`** com os quatro componentes da régua, endpoint de leitura e consumidor de eventos.
-4. **Job diário** de recálculo.
-5. **Modo shadow** por um período antes de qualquer uso em decisão de crédito.
-6. **Fatores econômicos internos** quando o negócio definir quais são.
+2. **`risk-score-api`** com os quatro componentes da régua, consumo do boletim de câmbio do BCB, endpoint de leitura (sem rota no gateway) e consumidor de eventos.
+3. **Job diário** de recálculo.
+4. **Modo shadow** por um período antes de qualquer uso em decisão de crédito.
+5. **Role de admin** + autorização no gateway, quando o time responsável entregar a claim — só então a rota é publicada.
+6. **Unificação de titulares legados** (pré-requisito para agregar múltiplas contas de cliente antigo).
+7. **Fatores econômicos internos**, se e quando o negócio definir quais são.
 
 ## Perguntas em aberto
 
-1. **Fonte de taxas de câmbio para BRL** — sem ela o componente de saldo não funciona para contas em outras moedas. Único item bloqueante que resta.
-2. Risco/Crédito valida os limiares propostos (R$ 1.000 / R$ 50.000, 10 e 30 transações/mês, 3× e 5× a mediana)?
-3. Risco/Crédito concorda com os **valores neutros para cliente legado e KYC ausente**? Sem eles, a base inteira nasce em MÉDIO/ALTO.
-4. Como resolver o **agrupamento conta→cliente da base legada**, dado que `accountHolderName` não é único?
-5. Quem cria a **role de admin** no Auth0, e em que prazo? É pré-requisito para expor a consulta.
-6. Quais serão os **fatores econômicos internos** (definição pendente no negócio) e qual a fonte deles?
+Nenhum item bloqueia o início da Fase 0. Continuam abertos, por decisão do negócio:
+
+1. **Role de admin** no provedor de identidade — chamado aberto junto ao time responsável. Até a entrega, o serviço fica sem rota no gateway.
+2. **Fatores econômicos internos do banco** — fora desta implementação; entram como componente adicional se aprovados.
+3. **Unificação de titulares legados:** com o ID único aplicado no backfill como um cliente por conta, quem valida a fusão de contas do mesmo titular (conferência manual? por documento?).
+4. Risco/Crédito confirma por escrito os **valores neutros de cliente legado e KYC ausente**, que impedem a base inteira de nascer em MÉDIO/ALTO.
+5. **Qual boletim do BCB usar** como oficial (abertura, intermediário ou fechamento) — a proposta é o **fechamento**, por ser único e auditável por data.
