@@ -93,16 +93,16 @@ The key architectural patterns used in the project include:
 ### To build the applications:
 
 - Start the config-server application.
-- Start the supporting services in Docker using Docker Compose by running the command `docker-compose docker-compose-infrastructure-services.yml up -d`.
+- Start the supporting services in Docker using Docker Compose by running the command `docker compose -f docker-compose-infrastructure-services.yml up -d`.
 - Open a terminal or command prompt and navigate to the project's root directory.
 - Run the command `mvn clean install -pl !config-server` to build all the applications.
 - To build a specific application, run the command `mvn clean install -pl <module-name>`. For example, to build the Account API, run the command `mvn clean install -pl account-api`.
 
 ### To run the microservices in your local environment:
 
-- Ensure that you have Java 17, Maven, and a compatible IDE (such as [IntelliJ IDEA](https://www.jetbrains.com/idea/download/) or [Eclipse](https://www.eclipse.org/downloads/)) installed and properly configured.
+- Ensure that you have Java 21 (LTS), Maven 3.6+, and a compatible IDE (such as [IntelliJ IDEA](https://www.jetbrains.com/idea/download/) or [Eclipse](https://www.eclipse.org/downloads/)) installed and properly configured.
 - Clone the repository and navigate to the project directory.
-- Start the supporting services in Docker using Docker Compose by running the command `docker-compose docker-compose-infrastructure-services.yml up -d`.
+- Start the supporting services in Docker using Docker Compose by running the command `docker compose -f docker-compose-infrastructure-services.yml up -d`.
 - To launch the applications, run each application in its respective module. Note that the config-server module should be started first.
 
 ### To run the microservices within Docker:
@@ -115,9 +115,9 @@ The key architectural patterns used in the project include:
 
 The Royal Reserve Bank project utilizes the following technologies and frameworks:
 
-- **Java 17:** for implementing the microservices.
-- **Spring Boot:** for simplifying the development and deployment of microservices by using pre-configured templates and tools.
-- **Spring Cloud:** for implementing microservices architectural patterns, such as service discovery, configuration management, and circuit breakers.
+- **Java 21 (LTS):** for implementing the microservices.
+- **Spring Boot 3.5:** for simplifying the development and deployment of microservices by using pre-configured templates and tools.
+- **Spring Cloud 2025.0:** for implementing microservices architectural patterns, such as service discovery, configuration management, and circuit breakers.
 - **Docker:** for containerization of microservices, making it easy to package and deploy the microservices across different environments.
 - **API Gateway:** for managing and routing API requests from users to different microservices and providing a unified entry point.
 - **JPA:** for implementing the Object Relational Mapping in the microservices, allowing Java applications to interact with databases and perform CRUD.
