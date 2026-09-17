@@ -60,7 +60,7 @@ class TransactionControllerTest {
     }
 
     /**
-     * Test for the {@link TransactionController#fallbackMethod(TransactionRequest, RuntimeException)} method.
+     * Test for the {@link TransactionController#fallbackMethod(TransactionRequest, Throwable)} method.
      */
     @Test
     void testFallbackMethod() {
