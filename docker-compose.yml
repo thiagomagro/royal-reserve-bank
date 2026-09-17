@@ -13,7 +13,7 @@ services:
     restart: on-failure
 
   account-api-mongo:
-    image: mongo:6.0.5
+    image: mongo:8.0
     container_name: account-api-mongo
     ports:
       - "27017:27017"
@@ -52,7 +52,7 @@ services:
 
   asset-management-api-mysql:
     container_name: asset-management-api-mysql
-    image: mysql:8.0.33
+    image: mysql:8.4
     ports:
       - "3306:3306"
     expose:
@@ -62,7 +62,6 @@ services:
       MYSQL_USER: admin
       MYSQL_PASSWORD: pwd
       MYSQL_ROOT_PASSWORD: pwd
-    command: --default-authentication-plugin=mysql_native_password
     volumes:
       - ./data/asset-management-api-mysql:/data/mysql
 
@@ -97,7 +96,7 @@ services:
     restart: on-failure
 
   grafana:
-    image: grafana/grafana:10.0.1
+    image: grafana/grafana:12.1.1
     container_name: grafana
     ports:
       - "3000:3000"
@@ -123,7 +122,7 @@ services:
     restart: on-failure
 
   notification-api-kafka:
-    image: confluentinc/cp-kafka:7.4.0
+    image: confluentinc/cp-kafka:7.9.1
     container_name: notification-api-kafka
     ports:
       - "9092:9092"
@@ -141,7 +140,7 @@ services:
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@notification-api-kafka:29093
 
   prometheus:
-    image: prom/prometheus:v2.43.0
+    image: prom/prometheus:v3.5.0
     container_name: prometheus
     ports:
       - "9090:9090"
@@ -154,7 +153,7 @@ services:
       - notification-api
 
   redis:
-    image: redis:7.0.11
+    image: redis:7.4
     container_name: redis
     ports:
       - "6379:6379"
@@ -177,7 +176,7 @@ services:
     restart: on-failure
 
   transaction-api-postgres:
-    image: postgres:15.2
+    image: postgres:17
     container_name: transaction-api-postgres
     ports:
       - "5432:5432"
@@ -191,7 +190,7 @@ services:
       - ./data/transaction-api-postgres:/data/postgres
 
   zipkin:
-    image: openzipkin/zipkin:2.24.0
+    image: openzipkin/zipkin:3.5
     container_name: zipkin
     ports:
       - "9411:9411"

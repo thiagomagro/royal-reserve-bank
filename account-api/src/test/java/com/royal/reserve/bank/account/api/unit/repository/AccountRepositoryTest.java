@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AccountRepositoryTest {
 
     @Container
-    static MongoDBContainer mongoDBContainer = new MongoDBContainer("mongo:6.0.5");
+    static MongoDBContainer mongoDBContainer = new MongoDBContainer("mongo:8.0");
 
     @Autowired
     private MockMvc mockMvc;
