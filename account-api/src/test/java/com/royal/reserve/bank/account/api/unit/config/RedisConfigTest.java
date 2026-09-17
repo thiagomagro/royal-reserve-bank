@@ -9,7 +9,6 @@ import com.royal.reserve.bank.account.api.serializer.CustomBigDecimalRedisSerial
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
@@ -24,12 +23,6 @@ import static org.mockito.Mockito.*;
  * Unit tests for {@link RedisConfig} class.
  */
 class RedisConfigTest {
-
-    @Value("${spring.data.redis.host}")
-    private String redisHost;
-
-    @Value("${spring.data.redis.port}")
-    private int redisPort;
 
     private RedisConfig redisConfig;
 
@@ -71,30 +64,4 @@ class RedisConfigTest {
         assertFalse(objectMapper.getDeserializationConfig().isEnabled(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES));
         assertFalse(objectMapper.getSerializationConfig().isEnabled(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS));
     }
-
-    /**
-     * Test for {@link RedisConfig#redisConnectionFactory()} method.
-     */
-    @Test
-    void testRedisConnectionFactory() {
-        // Given
-        String actualHost = redisConfig.getRedisHost();
-        int actualPort = redisConfig.getRedisPort();
-
-        // When and Then
-        assertEquals(redisHost, actualHost);
-        assertEquals(redisPort, actualPort);
-    }
-
-/*    @Test
-    void testRedisConnectionFactory() {
-        // Given
-        RedisConnectionFactory redisConnectionFactory = redisConfig.redisConnectionFactory();
-        LettuceConnectionFactory lettuceConnectionFactory = (LettuceConnectionFactory) redisConnectionFactory;
-        RedisStandaloneConfiguration redisConfig = lettuceConnectionFactory.getStandaloneConfiguration();
-
-        // When and Then
-        assertEquals("localhost", redisConfig.getHostName());
-        assertEquals(6379, redisConfig.getPort());
-    }*/
 }

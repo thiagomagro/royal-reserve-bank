@@ -5,32 +5,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.royal.reserve.bank.account.api.dto.AccountResponse;
 import com.royal.reserve.bank.account.api.serializer.CustomBigDecimalRedisSerializer;
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
-import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.*;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.RedisSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.util.List;
 
 /**
  * Configuration class for Redis.
+ * The connection factory is auto-configured by Spring Boot from the {@code spring.data.redis.*} properties.
  */
-@Getter
-@Setter
 @Configuration
 public class RedisConfig {
-
-    @Value("${spring.data.redis.host}")
-    private String redisHost;
-
-    @Value("${spring.data.redis.port}")
-    private int redisPort;
 
     /**
      * Creates a Redis template for storing and retrieving account responses.
@@ -70,23 +60,6 @@ public class RedisConfig {
         objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
 
         return objectMapper;
-    }
-
-    /**
-     * Creates a Redis connection factory.
-     *
-     * @return The Redis connection factory.
-     */
-    @Bean
-    public RedisConnectionFactory redisConnectionFactory() {
-        RedisStandaloneConfiguration standaloneConfiguration = new RedisStandaloneConfiguration();
-        standaloneConfiguration.setHostName(redisHost);
-        standaloneConfiguration.setPort(redisPort);
-
-        LettuceConnectionFactory connectionFactory = new LettuceConnectionFactory(standaloneConfiguration);
-        connectionFactory.afterPropertiesSet();
-
-        return connectionFactory;
     }
 }
 
