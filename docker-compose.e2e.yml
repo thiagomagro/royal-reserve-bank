@@ -1,0 +1,27 @@
+services:
+  account-api:
+    image: registry.hub.docker.com/0145136798/account-api:latest
+    pull_policy: never
+  api-gateway:
+    image: registry.hub.docker.com/0145136798/api-gateway:latest
+    pull_policy: never
+  asset-management-api:
+    image: registry.hub.docker.com/0145136798/asset-management-api:latest
+    pull_policy: never
+  config-server:
+    image: registry.hub.docker.com/0145136798/config-server:latest
+    pull_policy: never
+    volumes:
+      - ./e2e-config-files/api-gateway.properties:/app/resources/config-files/api-gateway.properties
+      - ./e2e-config-files/api-gateway-docker.properties:/app/resources/config-files/api-gateway-docker.properties
+  discovery-server:
+    image: registry.hub.docker.com/0145136798/discovery-server:latest
+    pull_policy: never
+  notification-api:
+    image: registry.hub.docker.com/0145136798/notification-api:latest
+    pull_policy: never
+  transaction-api:
+    image: registry.hub.docker.com/0145136798/transaction-api:latest
+    pull_policy: never
+    ports:
+      - "8082:8080"

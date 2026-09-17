@@ -181,6 +181,16 @@ To perform manual testing using Postman, follow these steps:
 
 Remember to ensure that the Royal Reserve Bank microservices are running before executing the requests in Postman to ensure successful communication with the APIs.
 
+# E2E Tests 🧪
+
+The E2E suite requires Docker, JDK 21, and Maven. Build the local service images first:
+
+```bash
+mvn -q -DskipTests compile jib:dockerBuild -pl config-server,discovery-server,api-gateway,account-api,asset-management-api,transaction-api,notification-api -Djib.from.image=mirror.gcr.io/library/eclipse-temurin:21.0.12_8-jre
+```
+
+Run the suite with `mvn -Pe2e verify -pl e2e-tests`. Use `-De2e.skipCompose=true` to keep an existing stack and `-De2e.keepStack=true` to leave the stack running after the tests. The suite obtains real Auth0 client-credentials tokens from `postman/postman-environment.json`; a local JWKS fallback is not needed because the Auth0 tenant is alive. The seven tests cover token authentication, Eureka service discovery, config serving, account creation and reads, asset availability, transaction notification, and the asset-management circuit-breaker fallback.
+
 # Monitoring and Logging 📊
 
 The project uses Prometheus and Grafana for monitoring and logging the microservices. The Prometheus server collects metrics from the microservices and stores them in a time-series database. The Grafana server then queries the Prometheus server to retrieve the metrics and display them in the form of visualizations and dashboards.
