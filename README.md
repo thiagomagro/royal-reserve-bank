@@ -108,8 +108,8 @@ The key architectural patterns used in the project include:
 ### To run the microservices within Docker:
 
 - Clone the repository and navigate to the project directory.
-- Start the microservices using Docker Compose by running the command `docker-compose up -d`.
-- To stop the microservices, run the command `docker-compose down`.
+- Start the microservices using Docker Compose by running the command `docker compose up -d`.
+- To stop the microservices, run the command `docker compose down`.
 
 # Technologies Used 💡
 
@@ -121,16 +121,16 @@ The Royal Reserve Bank project utilizes the following technologies and framework
 - **Docker:** for containerization of microservices, making it easy to package and deploy the microservices across different environments.
 - **API Gateway:** for managing and routing API requests from users to different microservices and providing a unified entry point.
 - **JPA:** for implementing the Object Relational Mapping in the microservices, allowing Java applications to interact with databases and perform CRUD.
-- **MongoDB:** for storing account data in the Account API allowing flexibility and scalability in handling large amounts of unstructured data.
-- **PostgreSQL:** for storing transaction data in the Transaction API.
-- **MySQL:** for storing asset data in the Asset Management API.
-- **Kafka:** for implementing asynchronous communication between microservices.
+- **MongoDB 8:** for storing account data in the Account API allowing flexibility and scalability in handling large amounts of unstructured data.
+- **PostgreSQL 17:** for storing transaction data in the Transaction API.
+- **MySQL 8.4 (LTS):** for storing asset data in the Asset Management API.
+- **Kafka (Confluent 7.9, KRaft):** for implementing asynchronous communication between microservices.
 - **Auth0:** for implementing authentication and authorization functionalities in the microservices, allowing secure access control.
 - **Prometheus:** for monitoring and alerting in the microservices, providing insights into the performance and health of the microservices.
 - **Grafana:** for monitoring and logging the microservices, providing insights into the performance and health of the microservices.
 - **Zipkin:** for distributed tracing in microservices architecture, allowing to track and analyze the flow of requests and performance analysis.
-- **Redis:** for caching frequently accessed data in the microservices, improving performance by reducing the load on the underlying data sources.
-- **JUnit:** for implementing unit tests in the microservices, allowing to test individual components and ensure that they are working as expected.
+- **Redis 7.4:** for caching frequently accessed data in the microservices, improving performance by reducing the load on the underlying data sources.
+- **JUnit 5 / Testcontainers:** for implementing unit and integration tests in the microservices, allowing to test individual components and ensure that they are working as expected.
 - **Mockito:** for implementing mock objects in the microservices, allowing to test the interactions between the various components.
 - **Postman:** for testing the microservices, allowing to send requests to the APIs and receive responses.
 
