@@ -1,21 +1,20 @@
 import { useState, type FormEvent } from "react";
+import { clearAccessToken, getAccessToken, setAccessToken } from "../api/client";
 import { useToast } from "../components/ToastContext";
-
-const TOKEN_KEY = "rrb.token";
 
 export function SettingsPage() {
   const { showToast } = useToast();
-  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY) ?? "");
+  const [token, setToken] = useState(() => getAccessToken() ?? "");
   const mockEnabled = import.meta.env.VITE_API_MOCK === "true";
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
-    localStorage.setItem(TOKEN_KEY, token.trim());
+    setAccessToken(token);
     showToast("success", "API token saved.");
   }
 
   function onClear() {
-    localStorage.removeItem(TOKEN_KEY);
+    clearAccessToken();
     setToken("");
     showToast("info", "API token cleared.");
   }
@@ -46,8 +45,9 @@ export function SettingsPage() {
           />
         </label>
         <p className="mb-4 text-xs text-slate-500">
-          The token is stored in your browser&apos;s local storage under <code>{TOKEN_KEY}</code>{" "}
-          and sent as a Bearer token on every API request.
+          The token is kept in memory only for this browser tab and sent as a Bearer token on every
+          API request. It is never written to localStorage or cookies, so you will need to paste it
+          again after a page reload.
         </p>
         <div className="flex gap-2">
           <button
