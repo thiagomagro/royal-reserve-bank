@@ -53,13 +53,10 @@ public class SecurityConfig {
         RSAPublicKey publicKey = loadPublicKey(jwt);
 
         serverHttpSecurity
-                .csrf().disable()
+                .csrf(csrf -> csrf.disable())
                 .addFilterAt(jwtFilter(), SecurityWebFiltersOrder.AUTHENTICATION)
-                .oauth2ResourceServer()
-                .jwt()
-                .publicKey(publicKey)
-                .and()
-                .and()
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwtSpec -> jwtSpec.publicKey(publicKey)))
                 .authorizeExchange(exchange ->
                         exchange.pathMatchers("/eureka/**", "/discovery-server/**")
                                 .permitAll()
