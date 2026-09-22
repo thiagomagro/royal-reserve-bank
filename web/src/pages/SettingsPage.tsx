@@ -31,7 +31,10 @@ export function SettingsPage() {
         </p>
       </div>
 
-      <form onSubmit={onSubmit} className="max-w-xl rounded-lg bg-white p-6 shadow">
+      <form
+        onSubmit={onSubmit}
+        className="w-full max-w-full rounded-lg bg-white p-6 shadow md:max-w-xl"
+      >
         <label className="mb-4 flex flex-col gap-1 text-sm">
           <span className="font-medium text-slate-700">API token (Auth0 JWT)</span>
           <textarea

@@ -10,8 +10,8 @@ async function enableMocking(): Promise<void> {
   if (import.meta.env.VITE_API_MOCK !== "true") {
     return;
   }
-  const { worker } = await import("./mocks/browser");
-  await worker.start({ onUnhandledRequest: "bypass" });
+  const { startMockWorker } = await import("./mocks/browser");
+  await startMockWorker();
 }
 
 const queryClient = new QueryClient();

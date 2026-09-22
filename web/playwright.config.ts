@@ -1,11 +1,14 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const port = process.env.PW_PORT ?? "5173";
+const baseURL = `http://localhost:${port}`;
+
 export default defineConfig({
   testDir: "./e2e",
   timeout: 30_000,
   retries: 0,
   use: {
-    baseURL: "http://localhost:5173",
+    baseURL,
     trace: "on-first-retry",
   },
   projects: [
@@ -15,8 +18,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run dev",
-    url: "http://localhost:5173",
+    command: `npm run dev -- --port ${port} --strictPort`,
+    url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 60_000,
   },
