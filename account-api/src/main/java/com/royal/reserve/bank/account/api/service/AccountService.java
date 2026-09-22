@@ -1,5 +1,6 @@
 package com.royal.reserve.bank.account.api.service;
 
+import com.royal.reserve.bank.account.api.exception.AccountAccessDeniedException;
 import com.royal.reserve.bank.account.api.model.Account;
 import com.royal.reserve.bank.account.api.repository.AccountRepository;
 import com.royal.reserve.bank.account.api.dto.AccountResponse;
@@ -31,11 +32,13 @@ public class AccountService {
      * Creates a new bank account.
      *
      * @param accountRequest The account request containing account details.
+     * @param ownerSubject   The subject of the authenticated account owner.
      */
-    public void createAccount(AccountRequest accountRequest) {
+    public void createAccount(AccountRequest accountRequest, String ownerSubject) {
         Account account = Account.builder()
                 .accountNumber(generateIBAN())
                 .accountHolderName(accountRequest.getAccountHolderName())
+                .ownerSubject(ownerSubject)
                 .balance(accountRequest.getBalance())
                 .currency(accountRequest.getCurrency())
                 .build();
@@ -101,24 +104,34 @@ public class AccountService {
     }
 
     /**
-     * Deletes a bank account based on the account holder name.
+     * Deletes a bank account based on the account holder name, if the caller is
+     * authorized to do so.
      *
-     * @param name The account holder name.
-     * @throws NoSuchElementException if the account is not found.
+     * @param name           The account holder name.
+     * @param callerSubject  The subject of the authenticated caller.
+     * @param callerIsAdmin  Whether the caller holds the admin permission.
+     * @throws NoSuchElementException        if the account is not found.
+     * @throws AccountAccessDeniedException if the caller is not the owner nor an admin.
      */
-    public void deleteAccountByAccountHolderName(String name) {
+    public void deleteAccount(String name, String callerSubject, boolean callerIsAdmin) {
         List<Account> accounts = accountRepository.findAll();
 
         Optional<Account> accountToDelete = accounts.stream()
                 .filter(a -> a.getAccountHolderName() != null &&
                         a.getAccountHolderName().equals(name)).findFirst();
 
-        if (accountToDelete.isPresent()) {
-            accountRepository.delete(accountToDelete.get());
-            redisTemplate.delete(CACHE_KEY);
-        } else {
+        if (accountToDelete.isEmpty()) {
             throw new NoSuchElementException("The bank account information for "
                     + name + " was not found.");
         }
+
+        Account account = accountToDelete.get();
+        if (!callerIsAdmin && !callerSubject.equals(account.getOwnerSubject())) {
+            throw new AccountAccessDeniedException("You are not allowed to delete the bank account of "
+                    + name + ".");
+        }
+
+        accountRepository.delete(account);
+        redisTemplate.delete(CACHE_KEY);
     }
 }

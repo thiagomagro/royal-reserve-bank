@@ -2,6 +2,7 @@ package com.royal.reserve.bank.account.api.unit.service;
 
 import com.royal.reserve.bank.account.api.dto.AccountRequest;
 import com.royal.reserve.bank.account.api.dto.AccountResponse;
+import com.royal.reserve.bank.account.api.exception.AccountAccessDeniedException;
 import com.royal.reserve.bank.account.api.model.Account;
 import com.royal.reserve.bank.account.api.repository.AccountRepository;
 import com.royal.reserve.bank.account.api.service.AccountService;
@@ -38,7 +39,7 @@ class AccountServiceTest {
     private RedisTemplate<String, List<AccountResponse>> redisTemplate;
 
     /**
-     * Test for the {@link AccountService#createAccount(AccountRequest)} method.
+     * Test for the {@link AccountService#createAccount(AccountRequest, String)} method.
      */
     @Test
     void testCreateAccount() {
@@ -51,7 +52,7 @@ class AccountServiceTest {
         when(accountRepository.save(any(Account.class))).thenReturn(account);
 
         // When
-        accountService.createAccount(accountRequest);
+        accountService.createAccount(accountRequest, "auth0|alice");
 
         // Then
         verify(accountRepository, times(1)).save(any(Account.class));
@@ -96,10 +97,87 @@ class AccountServiceTest {
     }
 
     /**
-     * Test for the {@link AccountService#deleteAccountByAccountHolderName(String)} method.
+     * Test for the {@link AccountService#deleteAccount(String, String, boolean)} method
+     * when the caller owns the account.
      */
     @Test
-    void testDeleteAccountByAccountHolderName() {
+    void testDeleteAccountByOwner() {
+        // Given
+        String accountHolderName = "Barack Obama";
+        Account account = createAccount("MT23-3821-4829-3279-9231", accountHolderName,
+                BigDecimal.valueOf(1000), Currency.getInstance("USD"));
+        account.setOwnerSubject("auth0|obama");
+        List<Account> accounts = new ArrayList<>();
+        accounts.add(account);
+
+        when(accountRepository.findAll()).thenReturn(accounts);
+        doNothing().when(accountRepository).delete(account);
+
+        // When
+        assertDoesNotThrow(() -> accountService.deleteAccount(accountHolderName, "auth0|obama", false));
+
+        // Then
+        verify(accountRepository, times(1)).findAll();
+        verify(accountRepository, times(1)).delete(account);
+    }
+
+    /**
+     * Test for the {@link AccountService#deleteAccount(String, String, boolean)} method
+     * when the caller does not own the account.
+     */
+    @Test
+    void testDeleteAccountByNonOwner() {
+        // Given
+        String accountHolderName = "Barack Obama";
+        Account account = createAccount("MT23-3821-4829-3279-9231", accountHolderName,
+                BigDecimal.valueOf(1000), Currency.getInstance("USD"));
+        account.setOwnerSubject("auth0|obama");
+        List<Account> accounts = new ArrayList<>();
+        accounts.add(account);
+
+        when(accountRepository.findAll()).thenReturn(accounts);
+
+        // When
+        AccountAccessDeniedException exception = assertThrows(AccountAccessDeniedException.class,
+                () -> accountService.deleteAccount(accountHolderName, "auth0|mallory", false));
+
+        // Then
+        assertEquals("You are not allowed to delete the bank account of " + accountHolderName + ".",
+                exception.getMessage());
+        verify(accountRepository, times(1)).findAll();
+        verify(accountRepository, never()).delete(any(Account.class));
+    }
+
+    /**
+     * Test for the {@link AccountService#deleteAccount(String, String, boolean)} method
+     * when the caller is an admin deleting another user's account.
+     */
+    @Test
+    void testDeleteAccountByAdmin() {
+        // Given
+        String accountHolderName = "Barack Obama";
+        Account account = createAccount("MT23-3821-4829-3279-9231", accountHolderName,
+                BigDecimal.valueOf(1000), Currency.getInstance("USD"));
+        account.setOwnerSubject("auth0|obama");
+        List<Account> accounts = new ArrayList<>();
+        accounts.add(account);
+
+        when(accountRepository.findAll()).thenReturn(accounts);
+        doNothing().when(accountRepository).delete(account);
+
+        // When
+        assertDoesNotThrow(() -> accountService.deleteAccount(accountHolderName, "auth0|admin", true));
+
+        // Then
+        verify(accountRepository, times(1)).delete(account);
+    }
+
+    /**
+     * Test for the {@link AccountService#deleteAccount(String, String, boolean)} method
+     * on a legacy account without an owner, for a non-admin caller.
+     */
+    @Test
+    void testDeleteAccountWithoutOwnerByNonAdmin() {
         // Given
         String accountHolderName = "Barack Obama";
         Account account = createAccount("MT23-3821-4829-3279-9231", accountHolderName,
@@ -108,21 +186,21 @@ class AccountServiceTest {
         accounts.add(account);
 
         when(accountRepository.findAll()).thenReturn(accounts);
-        doNothing().when(accountRepository).delete(account);
 
         // When
-        assertDoesNotThrow(() -> accountService.deleteAccountByAccountHolderName(accountHolderName));
+        assertThrows(AccountAccessDeniedException.class,
+                () -> accountService.deleteAccount(accountHolderName, "auth0|mallory", false));
 
         // Then
-        verify(accountRepository, times(1)).findAll();
-        verify(accountRepository, times(1)).delete(account);
+        verify(accountRepository, never()).delete(any(Account.class));
     }
 
     /**
-     * Test for the {@link AccountService#deleteAccountByAccountHolderName(String)} method when account is not found.
+     * Test for the {@link AccountService#deleteAccount(String, String, boolean)} method
+     * when the account is not found.
      */
     @Test
-    void testDeleteAccountByAccountHolderNameAccountNotFound() {
+    void testDeleteAccountAccountNotFound() {
         // Given
         String accountHolderName = "Johnny Depp";
         List<Account> accounts = new ArrayList<>();
@@ -131,7 +209,7 @@ class AccountServiceTest {
 
         // When
         NoSuchElementException exception = assertThrows(NoSuchElementException.class, () ->
-                accountService.deleteAccountByAccountHolderName(accountHolderName));
+                accountService.deleteAccount(accountHolderName, "auth0|depp", false));
 
         // Then
         assertEquals("The bank account information for " + accountHolderName + " was not found.",

@@ -3,6 +3,7 @@ package com.royal.reserve.bank.account.api.unit.controller;
 import com.royal.reserve.bank.account.api.controller.AccountController;
 import com.royal.reserve.bank.account.api.dto.AccountRequest;
 import com.royal.reserve.bank.account.api.dto.AccountResponse;
+import com.royal.reserve.bank.account.api.exception.AccountAccessDeniedException;
 import com.royal.reserve.bank.account.api.service.AccountService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,7 +33,7 @@ class AccountControllerTest {
     private AccountController accountController;
 
     /**
-     * Test for the {@link AccountController#createAccount(AccountRequest)} method.
+     * Test for the {@link AccountController#createAccount(AccountRequest, String)} method.
      */
     @Test
     void testCreateAccount() {
@@ -41,12 +42,13 @@ class AccountControllerTest {
         accountRequest.setAccountHolderName("Al Pacino");
 
         // When
-        ResponseEntity<String> responseEntity = accountController.createAccount(accountRequest);
+        ResponseEntity<String> responseEntity =
+                accountController.createAccount(accountRequest, "auth0|alice");
 
         // Then
         assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
         assertEquals("Successfully set up a new bank account for Al Pacino.", responseEntity.getBody());
-        verify(accountService, times(1)).createAccount(accountRequest);
+        verify(accountService, times(1)).createAccount(accountRequest, "auth0|alice");
     }
 
     /**
@@ -76,7 +78,7 @@ class AccountControllerTest {
     }
 
     /**
-     * Test for the {@link AccountController#deleteAccount(AccountRequest)} method.
+     * Test for the {@link AccountController#deleteAccount(AccountRequest, String, String)} method.
      */
     @Test
     void testDeleteAccount() {
@@ -85,11 +87,54 @@ class AccountControllerTest {
         accountRequest.setAccountHolderName("Al Pacino");
 
         // When
-        ResponseEntity<String> responseEntity = accountController.deleteAccount(accountRequest);
+        ResponseEntity<String> responseEntity =
+                accountController.deleteAccount(accountRequest, "auth0|alice", "");
 
         // Then
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
         assertEquals("Successfully deleted Al Pacino's account.", responseEntity.getBody());
-        verify(accountService, times(1)).deleteAccountByAccountHolderName("Al Pacino");
+        verify(accountService, times(1)).deleteAccount("Al Pacino", "auth0|alice", false);
+    }
+
+    /**
+     * Test for the {@link AccountController#deleteAccount(AccountRequest, String, String)} method
+     * when the caller is not allowed to delete the account.
+     */
+    @Test
+    void testDeleteAccountForbidden() {
+        // Given
+        AccountRequest accountRequest = new AccountRequest();
+        accountRequest.setAccountHolderName("Al Pacino");
+        doThrow(new AccountAccessDeniedException(
+                "You are not allowed to delete the bank account of Al Pacino."))
+                .when(accountService).deleteAccount("Al Pacino", "auth0|bob", false);
+
+        // When
+        ResponseEntity<String> responseEntity =
+                accountController.deleteAccount(accountRequest, "auth0|bob", "");
+
+        // Then
+        assertEquals(HttpStatus.FORBIDDEN, responseEntity.getStatusCode());
+        assertEquals("You are not allowed to delete the bank account of Al Pacino.",
+                responseEntity.getBody());
+    }
+
+    /**
+     * Test for the {@link AccountController#deleteAccount(AccountRequest, String, String)} method
+     * when the caller holds the admin permission.
+     */
+    @Test
+    void testDeleteAccountAsAdmin() {
+        // Given
+        AccountRequest accountRequest = new AccountRequest();
+        accountRequest.setAccountHolderName("Al Pacino");
+
+        // When
+        ResponseEntity<String> responseEntity =
+                accountController.deleteAccount(accountRequest, "auth0|admin", "accounts:admin");
+
+        // Then
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        verify(accountService).deleteAccount("Al Pacino", "auth0|admin", true);
     }
 }
