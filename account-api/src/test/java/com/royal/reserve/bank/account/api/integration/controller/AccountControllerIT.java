@@ -1,6 +1,8 @@
 package com.royal.reserve.bank.account.api.integration.controller;
 
 import com.royal.reserve.bank.account.api.controller.AccountController;
+import com.royal.reserve.bank.account.api.exception.AccountAccessDeniedException;
+import com.royal.reserve.bank.account.api.util.AuthHeaders;
 import com.royal.reserve.bank.account.api.service.AccountService;
 import com.royal.reserve.bank.account.api.dto.AccountResponse;
 import com.royal.reserve.bank.account.api.dto.AccountRequest;
@@ -18,6 +20,7 @@ import java.util.Arrays;
 import java.util.Currency;
 import java.util.List;
 
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
@@ -46,6 +49,7 @@ class AccountControllerIT {
 
         // When and Then
         mockMvc.perform(MockMvcRequestBuilders.post("/api/account")
+                        .header(AuthHeaders.SUBJECT, "auth0|george")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"accountHolderName\":\"George Clooney\"}"))
                 .andExpect(MockMvcResultMatchers.status().isCreated())
@@ -96,7 +100,7 @@ class AccountControllerIT {
     }
 
     /**
-     * Test for the {@link AccountController#deleteAccount(AccountRequest)} method.
+     * Test for the {@link AccountController#deleteAccount(AccountRequest, String, String)} method.
      *
      * @throws Exception if an exception occurs during the test
      */
@@ -108,10 +112,49 @@ class AccountControllerIT {
 
         // When and Then
         mockMvc.perform(MockMvcRequestBuilders.delete("/api/account")
+                        .header(AuthHeaders.SUBJECT, "auth0|nicole")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"accountHolderName\":\"Nicole Kidman\"}"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.content()
                         .string("Successfully deleted Nicole Kidman's account."));
+    }
+
+    /**
+     * Test for the {@link AccountController#deleteAccount(AccountRequest, String, String)} method
+     * when the subject header propagated by the API gateway is missing.
+     *
+     * @throws Exception if an exception occurs during the test
+     */
+    @Test
+    void testDeleteAccountWithoutSubjectHeader() throws Exception {
+        // When and Then
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/account")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"accountHolderName\":\"Nicole Kidman\"}"))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest());
+    }
+
+    /**
+     * Test for the {@link AccountController#deleteAccount(AccountRequest, String, String)} method
+     * when the caller is not allowed to delete the account.
+     *
+     * @throws Exception if an exception occurs during the test
+     */
+    @Test
+    void testDeleteAccountForbidden() throws Exception {
+        // Given
+        doThrow(new AccountAccessDeniedException(
+                "You are not allowed to delete the bank account of Nicole Kidman."))
+                .when(accountService).deleteAccount("Nicole Kidman", "auth0|mallory", false);
+
+        // When and Then
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/account")
+                        .header(AuthHeaders.SUBJECT, "auth0|mallory")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"accountHolderName\":\"Nicole Kidman\"}"))
+                .andExpect(MockMvcResultMatchers.status().isForbidden())
+                .andExpect(MockMvcResultMatchers.content()
+                        .string("You are not allowed to delete the bank account of Nicole Kidman."));
     }
 }
