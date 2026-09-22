@@ -25,6 +25,7 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
 
+      - run: npm install -g npm@12
       - run: npm ci
       - run: npm run lint
       - run: npm run format:check

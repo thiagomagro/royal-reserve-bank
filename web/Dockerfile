@@ -5,6 +5,7 @@ ARG VITE_API_MOCK=false
 ENV VITE_API_MOCK=$VITE_API_MOCK
 
 COPY package.json package-lock.json ./
+RUN npm install -g npm@12
 RUN npm ci
 
 COPY . .
