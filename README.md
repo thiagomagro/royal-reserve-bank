@@ -224,6 +224,33 @@ To set up Grafana with Prometheus as the data source and configure a dashboard u
   <img src="./docs/readme-assets/grafana-dashboard.png">
 </picture>
 
+# Web Front-end 🖥️
+
+A React + TypeScript single-page application lives in the [`web`](./web) directory. It consumes the microservices through the API gateway (`/api/**`) and provides pages for the dashboard, accounts, transactions, asset availability and settings.
+
+### To run the front-end with the built-in API mock:
+
+- Requires Node.js 22+ and npm.
+- `cd web && npm install`
+- `npm run dev` — starts Vite on `http://localhost:5173` with MSW mock data enabled (no Java services needed).
+
+### To run the front-end against the API gateway:
+
+- Start the microservices (see "Clone And Use" above) so the gateway listens on `http://localhost:8080`.
+- `cd web && npm run dev:api` — starts Vite with `/api` proxied to the gateway.
+- All `/api/**` requests need an `Authorization: Bearer <Auth0 JWT>` header. Paste your token on the **Settings** page (it is stored in localStorage under `rrb.token`) or provide it at build/dev time via the `VITE_API_TOKEN` environment variable.
+
+### To run the front-end within Docker:
+
+- `docker compose up -d web` — builds the `web` image and serves the app on `http://localhost:3000`, proxying `/api/` to `api-gateway:8080` inside the compose network.
+
+### Other useful scripts (inside `web/`):
+
+- `npm run lint`, `npm run format:check`, `npm run typecheck` — static checks.
+- `npm test` — Vitest unit/integration tests (MSW-powered, no backend needed).
+- `npm run test:e2e` — Playwright smoke tests (requires `npx playwright install --with-deps chromium` once).
+- `npm run build` / `npm run preview` — production build and local preview.
+
 # Contributing 🤝
 
 Contributions to the Reserve Bank project are welcome! If you encounter any bugs, have feature ideas, or would like to contribute code, please feel free to submit a pull request. Your valuable contributions are highly appreciated. Please make sure to follow the standard pull request guidelines. Thank you!

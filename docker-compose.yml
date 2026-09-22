@@ -190,6 +190,18 @@ services:
     volumes:
       - ./data/transaction-api-postgres:/data/postgres
 
+  web:
+    container_name: web
+    build:
+      context: ./web
+      args:
+        VITE_API_MOCK: "false"
+    ports:
+      - "3000:80"
+    depends_on:
+      - api-gateway
+    restart: on-failure
+
   zipkin:
     image: openzipkin/zipkin:2.24.0
     container_name: zipkin
