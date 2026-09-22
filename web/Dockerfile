@@ -1,11 +1,11 @@
-FROM node:22-alpine AS build
+FROM node:24-alpine AS build
 WORKDIR /app
 
 ARG VITE_API_MOCK=false
 ENV VITE_API_MOCK=$VITE_API_MOCK
 
 COPY package.json package-lock.json ./
-RUN npm install -g npm@12
+RUN npm install -g npm@12.0.2
 RUN npm ci
 
 COPY . .

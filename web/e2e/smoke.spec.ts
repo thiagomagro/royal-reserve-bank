@@ -28,3 +28,30 @@ test("assets check shows availability badges", async ({ page }) => {
   await expect(page.getByText("Available", { exact: true })).toBeVisible();
   await expect(page.getByText("Unavailable")).toBeVisible();
 });
+
+test("dashboard shows account totals and navigates to accounts", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
+  await expect(page.getByText(/^Total balance \(/).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Top accounts" })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "Alice Johnson" })).toBeVisible();
+
+  await page.getByRole("link", { name: "Manage accounts" }).click();
+  await expect(page).toHaveURL(/\/accounts$/);
+  await expect(page.getByRole("heading", { name: "Accounts" })).toBeVisible();
+});
+
+test("settings saves and clears the API token", async ({ page }) => {
+  await page.goto("/settings");
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(page.getByText("API mock mode:")).toContainText("enabled");
+
+  await page.getByPlaceholder("eyJhbGciOi…").fill("test-token-123");
+  await page.getByRole("button", { name: "Save token" }).click();
+  await expect(page.getByText("API token saved.")).toBeVisible();
+  expect(await page.evaluate(() => localStorage.getItem("rrb.token"))).toBe("test-token-123");
+
+  await page.getByRole("button", { name: "Clear token" }).click();
+  await expect(page.getByText("API token cleared.")).toBeVisible();
+  expect(await page.evaluate(() => localStorage.getItem("rrb.token"))).toBeNull();
+});
