@@ -5,6 +5,7 @@ import { ApiError } from "../api/client";
 import type { Currency } from "../api/types";
 import { formatCurrency } from "../lib/format";
 import { useToast } from "../components/ToastContext";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 
 const CURRENCIES: Currency[] = ["USD", "EUR", "GBP", "BRL"];
 
@@ -12,6 +13,7 @@ export function AccountsPage() {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
   const [holderName, setHolderName] = useState("");
   const [balance, setBalance] = useState("0");
   const [currency, setCurrency] = useState<Currency>("USD");
@@ -67,14 +69,19 @@ export function AccountsPage() {
   }
 
   function onDelete(accountHolderName: string) {
-    if (window.confirm(`Delete the account for ${accountHolderName}?`)) {
-      deleteMutation.mutate({ accountHolderName });
+    setPendingDelete(accountHolderName);
+  }
+
+  function onConfirmDelete() {
+    if (pendingDelete) {
+      deleteMutation.mutate({ accountHolderName: pendingDelete });
     }
+    setPendingDelete(null);
   }
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold text-slate-900">Accounts</h1>
         <button
           type="button"
@@ -93,7 +100,7 @@ export function AccountsPage() {
       )}
 
       {accounts && (
-        <div className="rounded-lg bg-white shadow">
+        <div className="overflow-x-auto rounded-lg bg-white shadow">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b text-slate-500">
@@ -190,6 +197,16 @@ export function AccountsPage() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title="Delete account"
+        message={pendingDelete ? `Delete the account for ${pendingDelete}?` : ""}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onConfirm={onConfirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
     </div>
   );
 }

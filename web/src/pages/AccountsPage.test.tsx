@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
@@ -41,6 +41,23 @@ describe("AccountsPage", () => {
     await waitFor(() => expect(screen.getByText("Diana Prince")).toBeInTheDocument());
     expect(
       await screen.findByText("Successfully set up a new bank account for Diana Prince."),
+    ).toBeInTheDocument();
+  });
+
+  it("deleting an account removes the row", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("Alice Johnson");
+
+    const row = screen.getByText("Alice Johnson").closest("tr")!;
+    await user.click(within(row).getByRole("button", { name: "Delete" }));
+
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "Delete" }));
+
+    await waitFor(() => expect(screen.queryByText("Alice Johnson")).not.toBeInTheDocument());
+    expect(
+      await screen.findByText("Successfully deleted the bank account for Alice Johnson."),
     ).toBeInTheDocument();
   });
 });

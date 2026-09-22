@@ -38,7 +38,7 @@ export function AssetsPage() {
     <div>
       <h1 className="mb-6 text-2xl font-bold text-slate-900">Assets</h1>
 
-      <form onSubmit={onSubmit} className="mb-6 flex gap-2">
+      <form onSubmit={onSubmit} className="mb-6 flex flex-wrap gap-2">
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -55,7 +55,7 @@ export function AssetsPage() {
       </form>
 
       {results.length > 0 && (
-        <div className="max-w-xl rounded-lg bg-white shadow">
+        <div className="max-w-xl overflow-x-auto rounded-lg bg-white shadow">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b text-slate-500">

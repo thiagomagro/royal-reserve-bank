@@ -87,75 +87,71 @@ export function NewTransactionPage() {
       <h1 className="mb-6 text-2xl font-bold text-slate-900">New transaction</h1>
 
       <form onSubmit={onSubmit} className="rounded-lg bg-white p-6 shadow">
-        <table className="mb-4 w-full text-left text-sm">
-          <thead>
-            <tr className="border-b text-slate-500">
-              <th className="py-2 pr-3">Asset code</th>
-              <th className="py-2 pr-3">Asset name</th>
-              <th className="py-2 pr-3">Value</th>
-              <th className="py-2 pr-3">Availability</th>
-              <th className="py-2" />
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item, index) => (
-              <tr key={index} className="border-b last:border-0">
-                <td className="py-2 pr-3">
-                  <input
-                    required
-                    value={item.assetCode}
-                    onChange={(e) => updateItem(index, { assetCode: e.target.value })}
-                    className="w-full rounded-md border border-slate-300 px-2 py-1"
-                    placeholder="PETR4"
-                  />
-                </td>
-                <td className="py-2 pr-3">
-                  <input
-                    value={item.assetName}
-                    onChange={(e) => updateItem(index, { assetName: e.target.value })}
-                    className="w-full rounded-md border border-slate-300 px-2 py-1"
-                    placeholder="Petrobras PN"
-                  />
-                </td>
-                <td className="py-2 pr-3">
-                  <input
-                    required
-                    type="number"
-                    min="1"
-                    step="1"
-                    value={item.value}
-                    onChange={(e) => updateItem(index, { value: e.target.value })}
-                    className="w-24 rounded-md border border-slate-300 px-2 py-1"
-                  />
-                </td>
-                <td className="py-2 pr-3">
-                  {item.availability === true && (
-                    <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700">
-                      Available
-                    </span>
-                  )}
-                  {item.availability === false && (
-                    <span className="rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700">
-                      Unavailable
-                    </span>
-                  )}
-                </td>
-                <td className="py-2 text-right">
-                  <button
-                    type="button"
-                    onClick={() => setItems((prev) => prev.filter((_, i) => i !== index))}
-                    disabled={items.length === 1}
-                    className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-100 disabled:opacity-40"
-                  >
-                    Remove
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="mb-4 flex flex-col gap-3">
+          <div className="hidden grid-cols-[1fr_1fr_6rem_7rem_5rem] gap-3 text-sm text-slate-500 md:grid">
+            <span>Asset code</span>
+            <span>Asset name</span>
+            <span>Value</span>
+            <span>Availability</span>
+            <span />
+          </div>
+          {items.map((item, index) => (
+            <div
+              key={index}
+              className="grid grid-cols-1 items-center gap-2 rounded-md border border-slate-200 p-3 md:grid-cols-[1fr_1fr_6rem_7rem_5rem] md:gap-3 md:border-0 md:p-0"
+            >
+              <input
+                required
+                aria-label="Asset code"
+                value={item.assetCode}
+                onChange={(e) => updateItem(index, { assetCode: e.target.value })}
+                className="w-full rounded-md border border-slate-300 px-2 py-1"
+                placeholder="PETR4"
+              />
+              <input
+                aria-label="Asset name"
+                value={item.assetName}
+                onChange={(e) => updateItem(index, { assetName: e.target.value })}
+                className="w-full rounded-md border border-slate-300 px-2 py-1"
+                placeholder="Petrobras PN"
+              />
+              <input
+                required
+                aria-label="Value"
+                type="number"
+                min="1"
+                step="1"
+                value={item.value}
+                onChange={(e) => updateItem(index, { value: e.target.value })}
+                className="w-full rounded-md border border-slate-300 px-2 py-1 md:w-24"
+              />
+              <div>
+                {item.availability === true && (
+                  <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700">
+                    Available
+                  </span>
+                )}
+                {item.availability === false && (
+                  <span className="rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-700">
+                    Unavailable
+                  </span>
+                )}
+              </div>
+              <div className="md:text-right">
+                <button
+                  type="button"
+                  onClick={() => setItems((prev) => prev.filter((_, i) => i !== index))}
+                  disabled={items.length === 1}
+                  className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-100 disabled:opacity-40"
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={() => setItems((prev) => [...prev, emptyRow()])}

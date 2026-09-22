@@ -51,7 +51,7 @@ export function DashboardPage() {
         ))}
       </div>
 
-      <div className="mb-8 rounded-lg bg-white p-5 shadow">
+      <div className="mb-8 overflow-x-auto rounded-lg bg-white p-5 shadow">
         <h2 className="mb-4 text-lg font-semibold text-slate-900">Top accounts</h2>
         <table className="w-full text-left text-sm">
           <thead>
