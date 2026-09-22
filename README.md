@@ -238,7 +238,7 @@ A React + TypeScript single-page application lives in the [`web`](./web) directo
 
 - Start the microservices (see "Clone And Use" above) so the gateway listens on `http://localhost:8080`.
 - `cd web && npm run dev:api` — starts Vite with `/api` proxied to the gateway.
-- All `/api/**` requests need an `Authorization: Bearer <Auth0 JWT>` header. Paste your token on the **Settings** page (it is stored in localStorage under `rrb.token`) or provide it at build/dev time via the `VITE_API_TOKEN` environment variable.
+- All `/api/**` requests need an `Authorization: Bearer <Auth0 JWT>` header. Paste your token on the **Settings** page — it is held in memory only (never persisted to localStorage or cookies), so you will need to paste it again after a page reload.
 
 ### To run the front-end within Docker:
 

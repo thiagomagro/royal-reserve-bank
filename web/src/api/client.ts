@@ -1,4 +1,22 @@
-const TOKEN_KEY = "rrb.token";
+export const LEGACY_TOKEN_KEY = "rrb.token";
+
+let accessToken: string | undefined;
+
+export function setAccessToken(token: string | undefined): void {
+  accessToken = token?.trim() || undefined;
+}
+
+export function getAccessToken(): string | undefined {
+  return accessToken;
+}
+
+export function clearAccessToken(): void {
+  accessToken = undefined;
+}
+
+if (typeof localStorage !== "undefined") {
+  localStorage.removeItem(LEGACY_TOKEN_KEY);
+}
 
 export class ApiError extends Error {
   readonly status: number;
@@ -10,15 +28,11 @@ export class ApiError extends Error {
   }
 }
 
-function getToken(): string | undefined {
-  return localStorage.getItem(TOKEN_KEY) ?? (import.meta.env.VITE_API_TOKEN as string | undefined);
-}
-
 export async function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
   const baseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "";
   const headers = new Headers(init.headers);
 
-  const token = getToken();
+  const token = getAccessToken();
   if (token) {
     headers.set("Authorization", `Bearer ${token}`);
   }
