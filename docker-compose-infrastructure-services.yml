@@ -54,13 +54,13 @@ services:
     image: postgres:15.2
     container_name: transaction-api-postgres
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     expose:
       - "5432"
     environment:
       POSTGRES_DB: postgres
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: admin
+      POSTGRES_USER: ${TRANSACTION_API_DB_USERNAME:?set TRANSACTION_API_DB_USERNAME in .env}
+      POSTGRES_PASSWORD: ${TRANSACTION_API_DB_PASSWORD:?set TRANSACTION_API_DB_PASSWORD in .env}
     volumes:
       - ./data/transaction-api-postgres:/data/postgres
 
