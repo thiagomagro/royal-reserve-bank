@@ -4,11 +4,13 @@ import com.royal.reserve.bank.account.api.model.Account;
 import com.royal.reserve.bank.account.api.repository.AccountRepository;
 import com.royal.reserve.bank.account.api.dto.AccountResponse;
 import com.royal.reserve.bank.account.api.dto.AccountRequest;
+import com.royal.reserve.bank.account.api.dto.DepositRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 /**
@@ -82,6 +84,32 @@ public class AccountService {
             redisTemplate.opsForValue().set(CACHE_KEY, accountResponses);
             return accountResponses;
         }
+    }
+
+    /**
+     * Adds funds to an existing bank account.
+     *
+     * @param id             The account id.
+     * @param depositRequest The deposit request containing a positive amount.
+     * @return The updated account.
+     * @throws IllegalArgumentException if the amount is missing or not positive.
+     * @throws NoSuchElementException   if the account is not found.
+     */
+    public AccountResponse deposit(String id, DepositRequest depositRequest) {
+        BigDecimal amount = depositRequest == null ? null : depositRequest.getAmount();
+        if (amount == null || amount.signum() <= 0) {
+            throw new IllegalArgumentException("The deposit amount must be greater than zero.");
+        }
+
+        Account account = accountRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("No bank account found with id " + id + "."));
+
+        BigDecimal currentBalance = account.getBalance() == null ? BigDecimal.ZERO : account.getBalance();
+        account.setBalance(currentBalance.add(amount));
+        accountRepository.save(account);
+        redisTemplate.delete(CACHE_KEY);
+        log.info("Deposited {} into the account of {}", amount, account.getAccountHolderName());
+        return mapToAccountResponse(account);
     }
 
     /**
