@@ -3,6 +3,7 @@ package com.royal.reserve.bank.account.api.unit.controller;
 import com.royal.reserve.bank.account.api.controller.AccountController;
 import com.royal.reserve.bank.account.api.dto.AccountRequest;
 import com.royal.reserve.bank.account.api.dto.AccountResponse;
+import com.royal.reserve.bank.account.api.dto.DepositRequest;
 import com.royal.reserve.bank.account.api.service.AccountService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,8 +13,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import static org.mockito.Mockito.*;
 
@@ -91,5 +94,61 @@ class AccountControllerTest {
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
         assertEquals("Successfully deleted Al Pacino's account.", responseEntity.getBody());
         verify(accountService, times(1)).deleteAccountByAccountHolderName("Al Pacino");
+    }
+
+    /**
+     * Test for the {@link AccountController#deposit(String, DepositRequest)} method.
+     */
+    @Test
+    void testDeposit() {
+        // Given
+        DepositRequest depositRequest = new DepositRequest(BigDecimal.valueOf(500));
+        AccountResponse updated = new AccountResponse();
+        updated.setId("acc-1");
+        updated.setBalance(BigDecimal.valueOf(1500));
+        when(accountService.deposit("acc-1", depositRequest)).thenReturn(updated);
+
+        // When
+        ResponseEntity<Object> responseEntity = accountController.deposit("acc-1", depositRequest);
+
+        // Then
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        assertEquals(updated, responseEntity.getBody());
+    }
+
+    /**
+     * Test for the {@link AccountController#deposit(String, DepositRequest)} method with an invalid amount.
+     */
+    @Test
+    void testDepositInvalidAmount() {
+        // Given
+        DepositRequest depositRequest = new DepositRequest(BigDecimal.ZERO);
+        when(accountService.deposit("acc-1", depositRequest))
+                .thenThrow(new IllegalArgumentException("The deposit amount must be greater than zero."));
+
+        // When
+        ResponseEntity<Object> responseEntity = accountController.deposit("acc-1", depositRequest);
+
+        // Then
+        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+        assertEquals("The deposit amount must be greater than zero.", responseEntity.getBody());
+    }
+
+    /**
+     * Test for the {@link AccountController#deposit(String, DepositRequest)} method when the account is not found.
+     */
+    @Test
+    void testDepositAccountNotFound() {
+        // Given
+        DepositRequest depositRequest = new DepositRequest(BigDecimal.ONE);
+        when(accountService.deposit("missing", depositRequest))
+                .thenThrow(new NoSuchElementException("No bank account found with id missing."));
+
+        // When
+        ResponseEntity<Object> responseEntity = accountController.deposit("missing", depositRequest);
+
+        // Then
+        assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+        assertEquals("No bank account found with id missing.", responseEntity.getBody());
     }
 }

@@ -3,6 +3,7 @@ package com.royal.reserve.bank.account.api.integration.controller;
 import com.royal.reserve.bank.account.api.controller.AccountController;
 import com.royal.reserve.bank.account.api.service.AccountService;
 import com.royal.reserve.bank.account.api.dto.AccountResponse;
+import com.royal.reserve.bank.account.api.dto.DepositRequest;
 import com.royal.reserve.bank.account.api.dto.AccountRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,8 @@ import java.util.Arrays;
 import java.util.Currency;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
@@ -113,5 +116,51 @@ class AccountControllerIT {
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.content()
                         .string("Successfully deleted Nicole Kidman's account."));
+    }
+
+    /**
+     * Test for the {@link AccountController#deposit(String, DepositRequest)} method.
+     *
+     * @throws Exception if an exception occurs during the test
+     */
+    @Test
+    void testDeposit() throws Exception {
+        // Given
+        AccountResponse updated = AccountResponse.builder()
+                .id("14312415")
+                .accountNumber("FR32-8472-4321-3894-2384")
+                .accountHolderName("Emma Stone")
+                .balance(BigDecimal.valueOf(284000))
+                .currency(Currency.getInstance("USD"))
+                .build();
+        when(accountService.deposit(eq("14312415"), any(DepositRequest.class))).thenReturn(updated);
+
+        // When and Then
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/account/14312415/deposit")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"amount\":1000}"))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(jsonPath("$.id").value("14312415"))
+                .andExpect(jsonPath("$.balance").value(284000));
+    }
+
+    /**
+     * Test for the {@link AccountController#deposit(String, DepositRequest)} method with an invalid amount.
+     *
+     * @throws Exception if an exception occurs during the test
+     */
+    @Test
+    void testDepositInvalidAmount() throws Exception {
+        // Given
+        when(accountService.deposit(eq("14312415"), any(DepositRequest.class)))
+                .thenThrow(new IllegalArgumentException("The deposit amount must be greater than zero."));
+
+        // When and Then
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/account/14312415/deposit")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"amount\":0}"))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest())
+                .andExpect(MockMvcResultMatchers.content()
+                        .string("The deposit amount must be greater than zero."));
     }
 }

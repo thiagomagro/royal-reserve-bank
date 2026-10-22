@@ -14,6 +14,10 @@ export interface CreateAccountRequest {
   currency: Currency;
 }
 
+export interface DepositRequest {
+  amount: number;
+}
+
 export interface DeleteAccountRequest {
   accountHolderName: string;
 }

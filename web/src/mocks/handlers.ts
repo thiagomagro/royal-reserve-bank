@@ -1,6 +1,11 @@
 import { http, HttpResponse } from "msw";
-import type { CreateAccountRequest, DeleteAccountRequest, TransactionRequest } from "../api/types";
-import { AVAILABLE_ASSETS, accounts, addAccount, removeAccount } from "./store";
+import type {
+  CreateAccountRequest,
+  DeleteAccountRequest,
+  DepositRequest,
+  TransactionRequest,
+} from "../api/types";
+import { AVAILABLE_ASSETS, accounts, addAccount, depositToAccount, removeAccount } from "./store";
 
 export const TRANSACTION_FALLBACK_MESSAGE = "Oops! Something went wrong, please try again later!";
 
@@ -16,6 +21,20 @@ export const handlers = [
 
   http.get("/api/account", () => {
     return HttpResponse.json(accounts);
+  }),
+
+  http.post("/api/account/:id/deposit", async ({ params, request }) => {
+    const body = (await request.json()) as DepositRequest;
+    if (typeof body.amount !== "number" || !(body.amount > 0)) {
+      return HttpResponse.text("The deposit amount must be greater than zero.", { status: 400 });
+    }
+    const account = depositToAccount(String(params.id), body.amount);
+    if (!account) {
+      return HttpResponse.text(`No bank account found with id ${String(params.id)}.`, {
+        status: 404,
+      });
+    }
+    return HttpResponse.json(account);
   }),
 
   http.delete("/api/account", async ({ request }) => {

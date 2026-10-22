@@ -41,6 +41,13 @@ export function addAccount(holder: string, balance: number, currency: string): A
   return account;
 }
 
+export function depositToAccount(id: string, amount: number): AccountResponse | undefined {
+  const account = accounts.find((a) => a.id === id);
+  if (!account) return undefined;
+  account.balance = Math.round((account.balance + amount) * 100) / 100;
+  return account;
+}
+
 export function removeAccount(holder: string): AccountResponse | undefined {
   const index = accounts.findIndex((a) => a.accountHolderName === holder);
   if (index === -1) return undefined;

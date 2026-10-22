@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createAccount, deleteAccount, getAccounts } from "../api/accounts";
+import { createAccount, deleteAccount, depositToAccount, getAccounts } from "../api/accounts";
 import { ApiError } from "../api/client";
-import type { Currency } from "../api/types";
+import type { AccountResponse, Currency } from "../api/types";
 import { formatCurrency } from "../lib/format";
 import { useToast } from "../components/ToastContext";
 import { ConfirmDialog } from "../components/ConfirmDialog";
@@ -17,6 +17,8 @@ export function AccountsPage() {
   const [holderName, setHolderName] = useState("");
   const [balance, setBalance] = useState("0");
   const [currency, setCurrency] = useState<Currency>("USD");
+  const [depositTarget, setDepositTarget] = useState<AccountResponse | null>(null);
+  const [depositAmount, setDepositAmount] = useState("");
 
   const {
     data: accounts,
@@ -53,6 +55,43 @@ export function AccountsPage() {
       showToast("error", err instanceof ApiError ? err.message : "Failed to delete account");
     },
   });
+
+  const depositMutation = useMutation({
+    mutationFn: ({ id, amount }: { id: string; amount: number }) =>
+      depositToAccount(id, { amount }),
+    onSuccess: (account) => {
+      showToast(
+        "success",
+        `Added funds to ${account.accountHolderName}. New balance: ${formatCurrency(account.balance, account.currency)}.`,
+      );
+      closeDeposit();
+      void queryClient.invalidateQueries({ queryKey: ["accounts"] });
+    },
+    onError: (err) => {
+      showToast("error", err instanceof ApiError ? err.message : "Failed to add funds");
+    },
+  });
+
+  function openDeposit(account: AccountResponse) {
+    setDepositTarget(account);
+    setDepositAmount("");
+  }
+
+  function closeDeposit() {
+    setDepositTarget(null);
+    setDepositAmount("");
+  }
+
+  function onSubmitDeposit(e: FormEvent) {
+    e.preventDefault();
+    if (!depositTarget) return;
+    const amount = Number(depositAmount);
+    if (Number.isNaN(amount) || amount <= 0) {
+      showToast("error", "Provide an amount greater than 0.");
+      return;
+    }
+    depositMutation.mutate({ id: depositTarget.id, amount });
+  }
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -120,7 +159,14 @@ export function AccountsPage() {
                     {formatCurrency(account.balance, account.currency)}
                   </td>
                   <td className="px-4 py-3">{account.currency}</td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-3 text-right whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => openDeposit(account)}
+                      className="mr-2 rounded-md border border-emerald-300 px-3 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50"
+                    >
+                      Add funds
+                    </button>
                     <button
                       type="button"
                       onClick={() => onDelete(account.accountHolderName)}
@@ -133,6 +179,59 @@ export function AccountsPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {depositTarget && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="deposit-title"
+            className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl"
+          >
+            <h2 id="deposit-title" className="mb-1 text-lg font-semibold text-slate-900">
+              Add funds
+            </h2>
+            <p className="mb-4 text-sm text-slate-500">
+              {depositTarget.accountHolderName} · current balance{" "}
+              {formatCurrency(depositTarget.balance, depositTarget.currency)}
+            </p>
+            <form onSubmit={onSubmitDeposit} className="flex flex-col gap-4">
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="font-medium text-slate-700">
+                  Amount ({depositTarget.currency})
+                </span>
+                <input
+                  required
+                  autoFocus
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={depositAmount}
+                  onChange={(e) => setDepositAmount(e.target.value)}
+                  className="rounded-md border border-slate-300 px-3 py-2"
+                  placeholder="1000.00"
+                />
+              </label>
+              <div className="mt-2 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={closeDeposit}
+                  className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={depositMutation.isPending}
+                  className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
+                >
+                  {depositMutation.isPending ? "Adding…" : "Confirm deposit"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

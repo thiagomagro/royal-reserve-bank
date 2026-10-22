@@ -60,4 +60,22 @@ describe("AccountsPage", () => {
       await screen.findByText("Successfully deleted the bank account for Alice Johnson."),
     ).toBeInTheDocument();
   });
+
+  it("adding funds updates the balance", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("Alice Johnson");
+
+    const row = screen.getByText("Alice Johnson").closest("tr")!;
+    await user.click(within(row).getByRole("button", { name: "Add funds" }));
+
+    const dialog = await screen.findByRole("dialog");
+    await user.type(within(dialog).getByPlaceholderText("1000.00"), "500");
+    await user.click(within(dialog).getByRole("button", { name: "Confirm deposit" }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    const updatedRow = (await screen.findByText("Alice Johnson")).closest("tr")!;
+    await waitFor(() => expect(within(updatedRow).getByText("$13,000.50")).toBeInTheDocument());
+    expect(await screen.findByText(/Added funds to Alice Johnson/)).toBeInTheDocument();
+  });
 });

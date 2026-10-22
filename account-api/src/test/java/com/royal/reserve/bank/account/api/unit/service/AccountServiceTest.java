@@ -2,6 +2,7 @@ package com.royal.reserve.bank.account.api.unit.service;
 
 import com.royal.reserve.bank.account.api.dto.AccountRequest;
 import com.royal.reserve.bank.account.api.dto.AccountResponse;
+import com.royal.reserve.bank.account.api.dto.DepositRequest;
 import com.royal.reserve.bank.account.api.model.Account;
 import com.royal.reserve.bank.account.api.repository.AccountRepository;
 import com.royal.reserve.bank.account.api.service.AccountService;
@@ -18,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Currency;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -137,6 +139,76 @@ class AccountServiceTest {
         assertEquals("The bank account information for " + accountHolderName + " was not found.",
                 exception.getMessage());
         verify(accountRepository, times(1)).findAll();
+    }
+
+    /**
+     * Test for the {@link AccountService#deposit(String, DepositRequest)} method.
+     */
+    @Test
+    void testDepositAddsAmountToBalance() {
+        // Given
+        Account account = createAccount("MT23-3821-4829-3279-9231", "Barack Obama",
+                new BigDecimal("1000.50"), Currency.getInstance("USD"));
+        account.setId("acc-1");
+        when(accountRepository.findById("acc-1")).thenReturn(Optional.of(account));
+
+        // When
+        AccountResponse response = accountService.deposit("acc-1", new DepositRequest(new BigDecimal("250.25")));
+
+        // Then
+        assertEquals(new BigDecimal("1250.75"), response.getBalance());
+        assertEquals("acc-1", response.getId());
+        verify(accountRepository, times(1)).save(account);
+        verify(redisTemplate, times(1)).delete("accounts");
+    }
+
+    /**
+     * Test for the {@link AccountService#deposit(String, DepositRequest)} method when the balance is null.
+     */
+    @Test
+    void testDepositTreatsNullBalanceAsZero() {
+        // Given
+        Account account = createAccount("MT23-3821-4829-3279-9231", "Barack Obama",
+                null, Currency.getInstance("USD"));
+        when(accountRepository.findById("acc-1")).thenReturn(Optional.of(account));
+
+        // When
+        AccountResponse response = accountService.deposit("acc-1", new DepositRequest(BigDecimal.TEN));
+
+        // Then
+        assertEquals(BigDecimal.TEN, response.getBalance());
+    }
+
+    /**
+     * Test for the {@link AccountService#deposit(String, DepositRequest)} method with a non-positive amount.
+     */
+    @Test
+    void testDepositRejectsNonPositiveAmount() {
+        // When / Then
+        assertThrows(IllegalArgumentException.class, () ->
+                accountService.deposit("acc-1", new DepositRequest(BigDecimal.ZERO)));
+        assertThrows(IllegalArgumentException.class, () ->
+                accountService.deposit("acc-1", new DepositRequest(new BigDecimal("-5"))));
+        assertThrows(IllegalArgumentException.class, () ->
+                accountService.deposit("acc-1", new DepositRequest(null)));
+        verify(accountRepository, never()).save(any(Account.class));
+    }
+
+    /**
+     * Test for the {@link AccountService#deposit(String, DepositRequest)} method when the account is not found.
+     */
+    @Test
+    void testDepositAccountNotFound() {
+        // Given
+        when(accountRepository.findById("missing")).thenReturn(Optional.empty());
+
+        // When
+        NoSuchElementException exception = assertThrows(NoSuchElementException.class, () ->
+                accountService.deposit("missing", new DepositRequest(BigDecimal.ONE)));
+
+        // Then
+        assertEquals("No bank account found with id missing.", exception.getMessage());
+        verify(accountRepository, never()).save(any(Account.class));
     }
 
     // Helper methods

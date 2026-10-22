@@ -14,6 +14,20 @@ test("create account appears in the table", async ({ page }) => {
   ).toBeVisible();
 });
 
+test("add funds increases the account balance", async ({ page }) => {
+  await page.goto("/accounts");
+  const row = page.getByRole("row", { name: /Bruno Souza/ });
+  await expect(row).toContainText("R$8,400.00");
+
+  await row.getByRole("button", { name: "Add funds" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByPlaceholder("1000.00").fill("1600");
+  await dialog.getByRole("button", { name: "Confirm deposit" }).click();
+
+  await expect(row).toContainText("R$10,000.00");
+  await expect(page.getByText(/Added funds to Bruno Souza/)).toBeVisible();
+});
+
 test("new transaction with PETR4 shows success message", async ({ page }) => {
   await page.goto("/transactions/new");
   await page.getByPlaceholder("PETR4").fill("PETR4");
