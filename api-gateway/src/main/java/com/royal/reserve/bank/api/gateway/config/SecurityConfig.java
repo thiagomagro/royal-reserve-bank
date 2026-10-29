@@ -14,7 +14,7 @@ import org.springframework.web.server.WebFilter;
 
 import java.io.*;
 import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
 import java.security.interfaces.RSAPublicKey;
 
 import com.auth0.jwt.JWT;
@@ -53,13 +53,10 @@ public class SecurityConfig {
         RSAPublicKey publicKey = loadPublicKey(jwt);
 
         serverHttpSecurity
-                .csrf().disable()
+                .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .addFilterAt(jwtFilter(), SecurityWebFiltersOrder.AUTHENTICATION)
-                .oauth2ResourceServer()
-                .jwt()
-                .publicKey(publicKey)
-                .and()
-                .and()
+                .oauth2ResourceServer(resourceServer -> resourceServer
+                        .jwt(jwtSpec -> jwtSpec.publicKey(publicKey)))
                 .authorizeExchange(exchange ->
                         exchange.pathMatchers("/eureka/**", "/discovery-server/**")
                                 .permitAll()
@@ -77,7 +74,7 @@ public class SecurityConfig {
      * @throws MalformedURLException  if the JWK Set URL is malformed
      */
     private RSAPublicKey loadPublicKey(DecodedJWT token) throws JwkException, MalformedURLException {
-        JwkProvider provider = new UrlJwkProvider(new URL(jwkSetUri));
+        JwkProvider provider = new UrlJwkProvider(URI.create(jwkSetUri).toURL());
         return (RSAPublicKey) provider.get(token.getKeyId()).getPublicKey();
     }
 

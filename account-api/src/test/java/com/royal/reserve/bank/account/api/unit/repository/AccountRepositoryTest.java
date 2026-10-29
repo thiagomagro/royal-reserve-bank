@@ -15,7 +15,9 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.testcontainers.containers.MongoDBContainer;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.math.BigDecimal;
 import java.util.Currency;
@@ -24,10 +26,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@Testcontainers
 class AccountRepositoryTest {
 
     @Container
     static MongoDBContainer mongoDBContainer = new MongoDBContainer("mongo:6.0.5");
+
+    @Container
+    static GenericContainer<?> redisContainer = new GenericContainer<>("redis:7.0.11")
+            .withExposedPorts(6379);
 
     @Autowired
     private MockMvc mockMvc;
@@ -38,13 +45,11 @@ class AccountRepositoryTest {
     @Autowired
     private AccountRepository accountRepository;
 
-    static {
-        mongoDBContainer.start();
-    }
-
     @DynamicPropertySource
     static void setProperties(DynamicPropertyRegistry dynamicPropertyRegistry) {
         dynamicPropertyRegistry.add("spring.data.mongodb.uri", mongoDBContainer::getReplicaSetUrl);
+        dynamicPropertyRegistry.add("spring.data.redis.host", redisContainer::getHost);
+        dynamicPropertyRegistry.add("spring.data.redis.port", () -> redisContainer.getMappedPort(6379));
     }
 
     /**
