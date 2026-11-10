@@ -9,7 +9,8 @@ export default defineConfig({
   retries: 0,
   use: {
     baseURL,
-    trace: "on-first-retry",
+    video: "on",
+    trace: "on",
   },
   projects: [
     {
