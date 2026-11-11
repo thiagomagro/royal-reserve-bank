@@ -1,7 +1,7 @@
 # State — RRB-1 Score de risco por cliente
 
 - Fase atual: 2 Inception
-- Próximo passo: aprovação 2.1+2.2 e parâmetros de negócio da 2.3 (PARAM-1..9)
+- Próximo passo: Gate G2 (aprovar + mergear PR de spec #23) → Construction B-1 (U-1..U-4 em paralelo)
 - Workspace: brownfield (microserviços Spring Boot + web React existentes)
 
 ## 0 Initialization
@@ -18,13 +18,13 @@
 ## 2 Inception
 - [x] 2.1 Reverse Engineering
 - [x] 2.2 Practices Discovery
-- [~] 2.3 Requirements
-- [ ] 2.4 User Stories
-- [ ] 2.6 Domain Design (ADRs)
-- [ ] 2.7 Units Generation (DAG)
-- [ ] 2.8 Contract Design
-- [ ] 2.9 Delivery Planning (bolts)
-- [ ] Gate G2
+- [x] 2.3 Requirements
+- [x] 2.4 User Stories
+- [x] 2.6 Domain Design (ADRs)
+- [x] 2.7 Units Generation (DAG)
+- [x] 2.8 Contract Design
+- [x] 2.9 Delivery Planning (bolts)
+- [~] Gate G2
 
 ## 3 Construction
 - [ ] Unidades (por U-n)

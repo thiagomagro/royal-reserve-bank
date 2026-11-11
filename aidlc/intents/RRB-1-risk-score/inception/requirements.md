@@ -31,8 +31,8 @@ Convenção do MVP: 1 conta = 1 cliente (ASSUMPTION-1). Score é **informativo**
 | NFR-7 | Observabilidade: métricas de cálculos/s, latência de cálculo, distribuição por faixa e falhas, expostas no Prometheus existente. |
 | NFR-8 | Compatibilidade: mudanças em APIs existentes de conta são aditivas (campos opcionais), sem quebrar web/clientes atuais. |
 
-## Parâmetros de negócio — **PROPOSTA (aguardando aprovação do Crédito)**
-Convenção proposta: **quanto maior o score, menor o risco** (padrão de mercado). Soma máxima = 1000.
+## Parâmetros de negócio — **APROVADOS pelo PO (Crédito) em 2026-11-11** (versão de parâmetros `v1`)
+Convenção aprovada: **quanto maior o score, menor o risco** (padrão de mercado). Soma máxima = 1000.
 
 **PARAM-1 Saldo em BRL — peso 300**
 | Saldo (BRL) | < 1.000 | 1.000–9.999 | 10.000–49.999 | ≥ 50.000 |

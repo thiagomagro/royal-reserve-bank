@@ -1,0 +1,8 @@
+# 2.7 Units of Work — INT-1
+
+| Unidade | Escopo | Módulos (dono) | Stories | Tamanho est. |
+|---|---|---|---|---|
+| **U-1 [RRB-10] Dados de base da conta + evento** | Fix Testcontainers (Docker atual); `openedAt` na criação; KYC (`PUT /api/account/{id}/kyc`); ledger `account_movement` no depósito; `GET /api/account/{id}/movements`; `GET /api/account/{id}/risk-profile`; publicar `AccountActivityEvent` em `accountActivityTopic`; `AccountResponse` com campos opcionais novos | `account-api/**`, `config-files/account-api*.properties`, `pom.xml` (só versão Testcontainers) | US-3, US-5 | ~500 linhas |
+| **U-2 [RRB-13] Serviço risk-score-api** | Novo módulo (Spring Boot, Mongo, Eureka, Config, Kafka consumer); `RiskScoreCalculator` puro com params `risk.*`; cliente `risk-profile` (contrato C-3); histórico idempotente; `GET latest`, `GET history`, `POST recalculate`; métricas Micrometer | `risk-score-api/**`, `config-files/risk-score-api*.properties`, `pom.xml` (só `<module>`), `docker-compose.yml` (só serviço novo) | US-1, US-2, US-4, US-5, US-6, US-7 | ~600 linhas |
+| **U-3 [RRB-12] Gateway: rota + autorização** | Rota `/api/risk-score/**`; mapeamento de escopos; regras do ADR-4; testes de 401/403/200 | `api-gateway/**`, `config-files/api-gateway*.properties` | US-1, US-3, US-4 (NFR-3) | ~200 linhas |
+| **U-4 [RRB-11] Web: página Credit Risk** | Rota `/credit-risk` + item de menu; lista de contas → detalhe (score, faixa, badge "Informativo", fatores com motivo, histórico, form KYC, botão Recalcular); tratamento 403/404; client + mocks MSW dos contratos; Vitest + Playwright | `web/**` | US-1, US-2, US-3, US-7 | ~600 linhas |
