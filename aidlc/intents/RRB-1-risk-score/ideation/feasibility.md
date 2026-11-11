@@ -17,6 +17,7 @@
 | Consulta pelo motor | Inexistente | Endpoint de leitura do último score via gateway |
 | Visão do Crédito com motivos | Inexistente | Tela no `web` com score, faixa e contribuição por fator |
 | Perfil Crédito | Gateway valida token, sem papéis | Autorização por papel/escopo `credit` (detalhe em 2.1) |
+| Saldo comparável entre moedas | `Currency` na conta, sem câmbio | Tabela de taxas → BRL em configuração; taxa usada nos fatores |
 | Pesos/limiares configuráveis | Config Server existe | Propriedades do score no Config Server, nunca constantes |
 
 **Veredito:** viável no stack atual, sem tecnologia nova. Maior esforço: dados de base (abertura, KYC, movimentações) que hoje não existem.
@@ -35,8 +36,8 @@
 | RISK-3 | Risco | Uso do score sem explicação violaria LGPD art. 20 | Fatores e contribuições sempre retornados junto ao score |
 | RISK-4 | Risco | Recalcular por evento pode ficar inconsistente se evento se perder | Recálculo idempotente + recálculo sob demanda/reprocessamento |
 | ASSUMPTION-1 | Premissa | 1 conta = 1 cliente (titular) no MVP | Aprovada pelo PO (3a) |
-| ASSUMPTION-2 | Premissa | Movimentação = depósitos agora; débitos/saques quando existirem | Confirmar no G1 |
+| ASSUMPTION-2 | Premissa | Movimentação = depósitos agora; débitos/saques quando existirem | Confirmada pelo PO no G1 |
 | ASSUMPTION-3 | Premissa | Tabela inicial de pesos/faixas proposta pelo Devin, aprovada pelo Crédito no G2 | Aprovada pelo PO (2a) |
-| ASSUMPTION-4 | Premissa | Score em moeda única: saldo comparado na moeda da conta, sem conversão | Confirmar no G1 |
+| ASSUMPTION-4 | Decisão (G1, ajustada) | Saldo convertido para BRL por tabela de taxas fixa e configurável (sem integração externa no MVP); taxa usada registrada nos fatores do score | Ajustada pelo PO no G1 |
 | ISSUE-1 | Issue | Gateway não tem papéis de usuário | Tratar em 2.1/2.6 |
 | DEP-1 | Dependência | Motor de liberação de crédito (consumidor) fora deste repo | Contrato de API em 2.8 |

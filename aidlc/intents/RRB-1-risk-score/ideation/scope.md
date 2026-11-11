@@ -2,6 +2,7 @@
 
 ## Em escopo (MVP)
 - Dados de base na conta: data de abertura, KYC (status + validade) editável manualmente, registro de movimentações por conta.
+- Conversão do saldo para BRL por tabela de taxas fixa e configurável; taxa usada registrada nos fatores.
 - Cálculo do score 0–1000 + faixa Baixo/Médio/Alto por regras com pesos/limiares em configuração.
 - Recálculo automático a cada movimentação (evento) e histórico de cada cálculo com fatores e versão dos parâmetros.
 - API de consulta do último score (com fatores) para sistemas internos.
@@ -13,6 +14,7 @@
 - Entidade Cliente agregando várias contas.
 - Integração KYC externa / bureaus (Serasa, SCR).
 - Modelo estatístico/ML.
+- Câmbio em tempo real / integração de cotações.
 - Visão do score pelo próprio cliente.
 
 ## Depois

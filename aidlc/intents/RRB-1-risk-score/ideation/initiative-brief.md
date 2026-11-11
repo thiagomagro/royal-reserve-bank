@@ -13,7 +13,9 @@
 2. RISK-2: pesos sem base histórica → shadow + recalibração.
 3. RISK-3: LGPD art. 20 → explicação sempre junto ao score.
 
-**Decisões em aberto (para G1)**
-- ASSUMPTION-2: movimentação = depósitos agora; débitos quando existirem.
-- ASSUMPTION-4: saldo avaliado na moeda da conta, sem conversão.
-- Tabela de pesos/faixas: proposta na Inception, aprovada pelo Crédito no G2.
+**Decisões do G1**
+- ASSUMPTION-2 confirmada: movimentação = depósitos agora; débitos quando existirem.
+- ASSUMPTION-4 ajustada: saldo convertido para BRL por tabela de taxas fixa e configurável, taxa usada registrada nos fatores.
+
+**Em aberto (para G2)**
+- Tabela de pesos/faixas/taxas e regra para dado ausente: proposta na Inception, aprovada pelo Crédito.
