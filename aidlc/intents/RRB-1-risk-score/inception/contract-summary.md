@@ -12,7 +12,7 @@ Request `{ "status": "VALID" | "PENDING" | "EXPIRED", "validUntil": "2027-11-11"
 200 → `[ { "id": "...", "accountId": "...", "type": "DEPOSIT", "amount": 100.00, "currency": "USD", "occurredAt": "..." } ]` (mais recente primeiro). 404 `ACCOUNT_NOT_FOUND`.
 `POST /api/account/{id}/deposit` (existente) passa a gravar a movimentação e publicar C-4 `DEPOSIT`; `POST /api/account` grava `openedAt=now` e publica `ACCOUNT_OPENED` (resposta inalterada).
 
-## C-3 `GET /api/account/{id}/risk-profile?windowDays=90` (account-api, U-1; consumido por U-2) — authz `credit:read` no gateway
+## C-3 `GET /api/account/{id}/risk-profile?windowDays=90` (account-api, U-1; consumido por U-2) — externo: authz `credit:read` no gateway; interno: U-2 chama `lb://account-api` direto (rede interna, sem gateway)
 200 →
 ```json
 { "accountId": "a1", "accountHolderName": "Ana", "balance": 3000.00, "currency": "USD",
