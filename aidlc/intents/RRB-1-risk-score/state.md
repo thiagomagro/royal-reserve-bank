@@ -1,7 +1,7 @@
 # State — RRB-1 Score de risco por cliente
 
 - Fase atual: 1 Ideation
-- Próximo passo: respostas do PO às perguntas de negócio (lote 1) → 1.3 Feasibility
+- Próximo passo: aprovação do Gate G1
 - Workspace: brownfield (microserviços Spring Boot + web React existentes)
 
 ## 0 Initialization
@@ -10,10 +10,10 @@
 - [x] State init
 
 ## 1 Ideation
-- [~] 1.1 Intent Capture & Framing
-- [ ] 1.3 Feasibility & Constraints
-- [ ] 1.4 Scope Definition
-- [ ] 1.7 Approval & Handoff (Gate G1)
+- [x] 1.1 Intent Capture & Framing
+- [x] 1.3 Feasibility & Constraints
+- [x] 1.4 Scope Definition
+- [~] 1.7 Approval & Handoff (Gate G1)
 
 ## 2 Inception
 - [ ] 2.1 Reverse Engineering

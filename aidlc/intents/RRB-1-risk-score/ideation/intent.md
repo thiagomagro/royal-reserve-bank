@@ -28,3 +28,11 @@
 ## Observações do código (detalhe em feasibility)
 - `Account` tem só `accountNumber`, `accountHolderName`, `balance`, `currency`: não há entidade cliente, data de abertura nem KYC. `[código]`
 - Transações (`transaction-api`) são compras de ativos sem vínculo com conta nem data; só depósitos (`POST /api/account/{id}/deposit`) movimentam saldo. `[código]`
+
+## Decisões do PO (lote 1, 2026-11-11)
+1. Score 0–1000 + faixa Baixo/Médio/Alto. `[pessoa]`
+2. Regras com pontos por fator, pesos/limiares configuráveis; Devin propõe tabela inicial como premissa, Crédito aprova no G2. `[pessoa]`
+3. MVP 1 conta = 1 cliente; conta ganha data de abertura, KYC (status + validade) e registro de movimentações por conta. KYC registrado manualmente pelo banco, sem integração externa. `[pessoa]`
+4. Recalcular a cada movimentação (evento); consulta lê o último score salvo. `[pessoa]`
+5. Score só informativo (shadow), com histórico de cada cálculo e seus fatores. `[pessoa]`
+6. Visível no internet banking só para o perfil Crédito. `[pessoa]`
