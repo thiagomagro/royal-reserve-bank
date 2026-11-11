@@ -1,0 +1,11 @@
+# Audit — RRB-1 (append-only)
+
+| Data | Evento | Versão (SHA) | Palavras da pessoa |
+|---|---|---|---|
+| 2026-11-11 | AI-DLC iniciado a partir de RRB-1 | main@debd269 | "Este é um ensaio da demo AI-DLC: siga o playbook à risca e pare em cada gate e em cada lote de perguntas de negócio" |
+| 2026-11-11 | Respostas de negócio lote 1 (Ideation) | f92b66e | "PO (Crédito): ok, siga as recomendações nas 6 (1a, 2a, 3a, 4a, 5a, 6a). Sobre o KYC: por enquanto o próprio banco registra manualmente (status + data de validade), sem integração externa. Pode seguir com Feasibility, Scope e o G1." |
+| 2026-11-11 | **Gate G1** Ideation → Inception: aprovado com ajustes (ASSUMPTION-4 ajustada; reapresentação do diff dispensada pela pessoa) | 0b22166 | "PO (Crédito): Aprovar com ajustes. ASSUMPTION-2 confirmada. ASSUMPTION-4 ajustada: a régua de saldo precisa ser comparável entre contas. Converta o saldo para BRL usando uma tabela de taxas fixa e configurável, sem integração externa neste MVP, e registre a taxa usada nos fatores do score. Aplique o ajuste e, depois de registrar o G1, siga direto para a Inception." |
+| 2026-11-11 | Aprovação de estágio 2.1+2.2 e parâmetros de negócio 2.3 (PARAM-1..9 → versão `v1`) | 6bad66f | "PO (Crédito): Lote 2 aprovado. 1. Sim: maior score = menor risco. 2. Pesos aprovados (Saldo 300, Volume 200, Frequência 150, Tempo de casa 200, KYC 150) e as faixas PARAM-1 a PARAM-5. 3. Classificação aprovada: 0–399 Alto, 400–699 Médio, 700–1000 Baixo. 4. Janela de 90 dias. 5. Dado ausente = 0 ponto, com motivo "dado ausente". 6. Taxas USD 5,00 / EUR 5,50 / GBP 6,40 aprovadas; moeda sem taxa = 0 ponto com motivo "taxa ausente". Registre no audit e siga com Stories (Jira), design/ADRs, unidades, contratos e plano até o G2. Correção do Testcontainers na primeira unidade: ok." |
+
+- 2026-11-11T13:33:18Z — Inception concluída; Stories RRB-3..RRB-9 e Tasks RRB-10..RRB-13 criadas no Jira (Epic RRB-2). Gate G2 apresentado ao PO; aprovação = merge do PR #23. Status: aguardando.
+- 2026-11-11T14:40:17Z — **G2 aprovado pelo PO** (resposta literal: "Aprovar"). PR #23 ainda aberto; Construction só começa após o merge.
