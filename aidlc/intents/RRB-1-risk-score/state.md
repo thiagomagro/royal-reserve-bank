@@ -24,7 +24,7 @@
 - [x] 2.7 Units Generation (DAG)
 - [x] 2.8 Contract Design
 - [x] 2.9 Delivery Planning (bolts)
-- [~] Gate G2
+- [x] Gate G2 (aprovado; aguardando merge do PR #23)
 
 ## 3 Construction
 - [ ] Unidades (por U-n)
