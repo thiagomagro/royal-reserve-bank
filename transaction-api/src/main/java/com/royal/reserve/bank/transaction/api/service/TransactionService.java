@@ -39,6 +39,13 @@ public class TransactionService {
      */
     @CacheEvict(value = "assetAvailability", allEntries = true)
     public String processTransaction(TransactionRequest transactionRequest) {
+        if (transactionRequest == null || transactionRequest.getTransactionItemsDtoList() == null
+                || transactionRequest.getTransactionItemsDtoList().isEmpty()
+                || transactionRequest.getTransactionItemsDtoList().stream().anyMatch(item ->
+                item == null || item.getAssetCode() == null || item.getAssetCode().isBlank()
+                        || item.getValue() <= 0)) {
+            throw new IllegalArgumentException("Invalid transaction items");
+        }
         Transaction transaction = new Transaction();
         transaction.setTransactionId(UUID.randomUUID().toString());
 
@@ -72,9 +79,15 @@ public class TransactionService {
      */
     @Cacheable("assetAvailability")
     public boolean checkAssetAvailability(List<String> assetCodes) {
-        return assetManagementClient.checkAssetAvailability(assetCodes)
-                .stream()
-                .allMatch(AssetManagementResponse::isAssetAvailable);
+        if (assetCodes == null || assetCodes.isEmpty()
+                || assetCodes.stream().anyMatch(code -> code == null || code.isBlank())) {
+            return false;
+        }
+        List<AssetManagementResponse> assets = assetManagementClient.checkAssetAvailability(assetCodes);
+        return assets != null && !assets.isEmpty()
+                && assets.stream().allMatch(asset -> asset != null && asset.isAssetAvailable())
+                && assetCodes.stream().allMatch(code -> assets.stream()
+                .anyMatch(asset -> code.equals(asset.getAssetCode())));
     }
 
     /**

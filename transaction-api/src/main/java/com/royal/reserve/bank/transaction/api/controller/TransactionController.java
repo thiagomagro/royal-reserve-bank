@@ -7,10 +7,13 @@ import io.github.resilience4j.retry.annotation.Retry;
 import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 /**
  * Controller class that handles HTTP requests related to transactions.
@@ -34,7 +37,7 @@ public class TransactionController {
     @CircuitBreaker(name = "asset-management", fallbackMethod = "fallbackMethod")
     @TimeLimiter(name = "asset-management")
     @Retry(name = "asset-management")
-    public CompletableFuture<String> processTransaction(@RequestBody TransactionRequest transactionRequest) {
+    public CompletableFuture<String> processTransaction(@Valid @RequestBody TransactionRequest transactionRequest) {
         log.info("Transaction processed.");
         return CompletableFuture.supplyAsync(() -> transactionService.processTransaction(transactionRequest));
     }
@@ -43,11 +46,23 @@ public class TransactionController {
      *
      *Circuit breaker implementation. Fallback method to handle exceptions during transaction processing.
      *@param transactionRequest The transaction request object.
-     *@param runtimeException The exception that occurred during transaction processing.
+     *@param throwable The exception that occurred during transaction processing.
      *@return A CompletableFuture representing a fallback message.
      */
-    public CompletableFuture<String> fallbackMethod(TransactionRequest transactionRequest, RuntimeException runtimeException) {
+    public CompletableFuture<String> fallbackMethod(TransactionRequest transactionRequest, Throwable throwable) {
+        Throwable cause = throwable;
+        while (cause instanceof CompletionException && cause.getCause() != null) {
+            cause = cause.getCause();
+        }
+        if (cause instanceof IllegalArgumentException) {
+            return CompletableFuture.failedFuture(cause);
+        }
         log.info("Transaction can't be processed. Executing fallback logic.");
         return CompletableFuture.supplyAsync(() -> "Oops! Something went wrong, please try again later!");
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleInvalidTransaction(IllegalArgumentException exception) {
+        return ResponseEntity.badRequest().body(exception.getMessage());
     }
 }

@@ -11,13 +11,25 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.TimeoutException;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
  * Unit tests for the {@link TransactionController} class.
@@ -60,7 +72,7 @@ class TransactionControllerTest {
     }
 
     /**
-     * Test for the {@link TransactionController#fallbackMethod(TransactionRequest, RuntimeException)} method.
+     * Test for the {@link TransactionController#fallbackMethod(TransactionRequest, Throwable)} method.
      */
     @Test
     void testFallbackMethod() {
@@ -73,5 +85,69 @@ class TransactionControllerTest {
 
         // Then
         Assertions.assertEquals(expectedFallbackResponse, result.join());
+    }
+
+    @Test
+    void fallbackHandlesTimeoutException() {
+        Assertions.assertEquals("Oops! Something went wrong, please try again later!",
+                transactionController.fallbackMethod(request, new TimeoutException("Asset management timed out")).join());
+    }
+
+    @Test
+    void rejectsInvalidPayloadsWithBadRequest() throws Exception {
+        try (LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean()) {
+            validator.afterPropertiesSet();
+            MockMvc mvc = MockMvcBuilders.standaloneSetup(transactionController).setValidator(validator).build();
+            for (String payload : List.of("{}", "{\"transactionItemsDtoList\":null}",
+                    "{\"transactionItemsDtoList\":[]}", "{\"transactionItemsDtoList\":[null]}",
+                    "{\"transactionItemsDtoList\":[{\"assetCode\":\"DVN\",\"value\":0}]}",
+                    "{\"transactionItemsDtoList\":[{\"assetCode\":\"DVN\",\"value\":-1}]}",
+                    "{\"transactionItemsDtoList\":[{\"assetCode\":\" \",\"value\":1}]}",
+                    "{\"transactionItemsDtoList\":[{\"value\":1}]}")) {
+                mvc.perform(post("/api/transaction").contentType(MediaType.APPLICATION_JSON).content(payload))
+                        .andExpect(status().isBadRequest())
+                        .andExpect(result -> Assertions.assertInstanceOf(MethodArgumentNotValidException.class,
+                                result.getResolvedException()));
+            }
+            verifyNoInteractions(transactionService);
+        }
+    }
+
+    @Test
+    void acceptsValidPayloadThroughHttpValidation() throws Exception {
+        when(transactionService.processTransaction(any(TransactionRequest.class)))
+                .thenReturn("Transaction completed successfully!");
+        MockMvc mvc = MockMvcBuilders.standaloneSetup(transactionController).build();
+        MvcResult result = mvc.perform(post("/api/transaction").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"transactionItemsDtoList\":[{\"assetCode\":\"DVN\",\"value\":1}]}"))
+                .andExpect(request().asyncStarted()).andReturn();
+        mvc.perform(asyncDispatch(result)).andExpect(status().isCreated())
+                .andExpect(content().string("Transaction completed successfully!"));
+    }
+
+    @Test
+    void returnsBusinessRejectionsAsBadRequest() throws Exception {
+        MockMvc mvc = MockMvcBuilders.standaloneSetup(transactionController).build();
+        for (String message : List.of("Asset is not available, please try again later", "Invalid transaction items")) {
+            when(transactionService.processTransaction(any(TransactionRequest.class)))
+                    .thenThrow(new IllegalArgumentException(message));
+            MvcResult result = mvc.perform(post("/api/transaction").contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"transactionItemsDtoList\":[{\"assetCode\":\"UNKNOWN\",\"value\":1}]}"))
+                    .andExpect(request().asyncStarted()).andReturn();
+            mvc.perform(asyncDispatch(result)).andExpect(status().isBadRequest())
+                    .andExpect(content().string(message));
+        }
+    }
+
+    @Test
+    void fallbackPreservesDirectAndWrappedBusinessRejections() {
+        for (String message : List.of("Asset is not available, please try again later", "Invalid transaction items")) {
+            IllegalArgumentException rejection = new IllegalArgumentException(message);
+            for (RuntimeException failure : List.of(rejection, new CompletionException(rejection))) {
+                CompletionException thrown = Assertions.assertThrows(CompletionException.class,
+                        () -> transactionController.fallbackMethod(request, failure).join());
+                Assertions.assertSame(rejection, thrown.getCause());
+            }
+        }
     }
 }
