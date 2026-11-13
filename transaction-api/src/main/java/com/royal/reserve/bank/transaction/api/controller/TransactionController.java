@@ -1,6 +1,7 @@
 package com.royal.reserve.bank.transaction.api.controller;
 
 import com.royal.reserve.bank.transaction.api.dto.TransactionRequest;
+import com.royal.reserve.bank.transaction.api.model.TransactionItems;
 import com.royal.reserve.bank.transaction.api.service.TransactionService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
@@ -11,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.List;
 
 /**
  * Controller class that handles HTTP requests related to transactions.
@@ -22,6 +24,12 @@ import java.util.concurrent.CompletableFuture;
 public class TransactionController {
 
     private final TransactionService transactionService;
+
+    @GetMapping("/search")
+    public List<TransactionItems> searchByAssetCode(@RequestParam String assetCode) {
+        log.info("Searching transaction items by asset code.");
+        return transactionService.searchByAssetCode(assetCode);
+    }
 
     /**
      *

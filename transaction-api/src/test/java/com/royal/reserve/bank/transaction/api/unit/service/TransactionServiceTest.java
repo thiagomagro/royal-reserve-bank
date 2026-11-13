@@ -6,6 +6,7 @@ import com.royal.reserve.bank.transaction.api.dto.TransactionItemsDto;
 import com.royal.reserve.bank.transaction.api.dto.TransactionRequest;
 import com.royal.reserve.bank.transaction.api.event.TransactionEvent;
 import com.royal.reserve.bank.transaction.api.model.Transaction;
+import com.royal.reserve.bank.transaction.api.model.TransactionItems;
 import com.royal.reserve.bank.transaction.api.repository.TransactionRepository;
 import com.royal.reserve.bank.transaction.api.service.TransactionService;
 import org.junit.jupiter.api.Test;
@@ -37,6 +38,33 @@ class TransactionServiceTest {
 
     @Mock
     private KafkaTemplate<String, TransactionEvent> kafkaTemplate;
+
+    @Test
+    void searchesTransactionItemsByAssetCode() {
+        transactionService = new TransactionService(transactionRepository, assetManagementClient, kafkaTemplate);
+        var items = Collections.singletonList(new TransactionItems(1L, "DVN", "Devon Energy", 100));
+        when(transactionRepository.findItemsByAssetCode("DVN")).thenReturn(items);
+        assertEquals(items, transactionService.searchByAssetCode("DVN"));
+        verify(transactionRepository).findItemsByAssetCode("DVN");
+        verifyNoInteractions(assetManagementClient, kafkaTemplate);
+    }
+
+    @Test
+    void returnsEmptySearchResults() {
+        transactionService = new TransactionService(transactionRepository, assetManagementClient, kafkaTemplate);
+        when(transactionRepository.findItemsByAssetCode("UNKNOWN")).thenReturn(Collections.emptyList());
+        assertTrue(transactionService.searchByAssetCode("UNKNOWN").isEmpty());
+    }
+
+    @Test
+    void propagatesSearchFailures() {
+        transactionService = new TransactionService(transactionRepository, assetManagementClient, kafkaTemplate);
+        var failure = new IllegalStateException("Search unavailable");
+        when(transactionRepository.findItemsByAssetCode("DVN")).thenThrow(failure);
+        assertSame(failure, assertThrows(IllegalStateException.class,
+                () -> transactionService.searchByAssetCode("DVN")));
+        verifyNoInteractions(assetManagementClient, kafkaTemplate);
+    }
 
     /**
      * Test method for {@link TransactionService#processTransaction(TransactionRequest)}.

@@ -30,6 +30,11 @@ public class TransactionService {
     private final AssetManagementClient assetManagementClient;
     private final KafkaTemplate<String, TransactionEvent> kafkaTemplate;
 
+    @Transactional(readOnly = true)
+    public List<TransactionItems> searchByAssetCode(String assetCode) {
+        return transactionRepository.findItemsByAssetCode(assetCode);
+    }
+
     /**
      *
      *Process a transaction based on the provided transaction request.
