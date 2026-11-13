@@ -13,7 +13,10 @@ class ConfigServerApplicationIT {
     @Test
     void contextLoads() {
         Assertions.assertDoesNotThrow(() -> {
-            ConfigServerApplication.main(new String[]{});
+            ConfigServerApplication.main(new String[]{
+                    "--spring.security.user.password=test",
+                    "--server.port=0"
+            });
         });
     }
 }

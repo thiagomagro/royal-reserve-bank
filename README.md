@@ -97,6 +97,7 @@ The key architectural patterns used in the project include:
 - Open a terminal or command prompt and navigate to the project's root directory.
 - Run the command `mvn clean install -pl !config-server` to build all the applications.
 - To build a specific application, run the command `mvn clean install -pl <module-name>`. For example, to build the Account API, run the command `mvn clean install -pl account-api`.
+- Export `CONFIG_SERVER_PASSWORD` for the config-server and all services; optionally export `CONFIG_SERVER_USERNAME` (default: `config-client`).
 
 ### To run the microservices in your local environment:
 
@@ -104,12 +105,14 @@ The key architectural patterns used in the project include:
 - Clone the repository and navigate to the project directory.
 - Start the supporting services in Docker using Docker Compose by running the command `docker-compose docker-compose-infrastructure-services.yml up -d`.
 - To launch the applications, run each application in its respective module. Note that the config-server module should be started first.
+- Export `CONFIG_SERVER_PASSWORD` for the config-server and all services; optionally export `CONFIG_SERVER_USERNAME` (default: `config-client`).
 
 ### To run the microservices within Docker:
 
 - Clone the repository and navigate to the project directory.
 - Start the microservices using Docker Compose by running the command `docker-compose up -d`.
 - To stop the microservices, run the command `docker-compose down`.
+- Set `CONFIG_SERVER_PASSWORD` for the config-server and all services; `CONFIG_SERVER_USERNAME` is optional (default: `config-client`). Docker does not publish config-server on host port 8888.
 
 # Technologies Used 💡
 
@@ -160,6 +163,7 @@ To run the tests, follow these steps:
 - To run all tests, use the command `mvn test`.
 - If you specifically want to run the integration tests, use the command `mvn failsafe:integration-test`.
 - Alternatively, if you prefer to run only the unit tests, use the command `mvn test -Dgroups="!integration"`.
+- Export `CONFIG_SERVER_PASSWORD` for the config-server and all services; optionally export `CONFIG_SERVER_USERNAME` (default: `config-client`).
 
 ### Manual Testing
 

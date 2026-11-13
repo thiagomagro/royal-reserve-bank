@@ -7,6 +7,8 @@ services:
     environment:
       spring.profiles.active: docker
       spring.cloud.config.uri: http://config-server:8888/config-server
+      CONFIG_SERVER_USERNAME: ${CONFIG_SERVER_USERNAME:-config-client}
+      CONFIG_SERVER_PASSWORD: ${CONFIG_SERVER_PASSWORD:?CONFIG_SERVER_PASSWORD must be set}
     depends_on:
       - account-api-mongo
       - api-gateway
@@ -34,6 +36,8 @@ services:
       spring.profiles.active: docker
       LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY: TRACE
       spring.cloud.config.uri: http://config-server:8888/config-server
+      CONFIG_SERVER_USERNAME: ${CONFIG_SERVER_USERNAME:-config-client}
+      CONFIG_SERVER_PASSWORD: ${CONFIG_SERVER_PASSWORD:?CONFIG_SERVER_PASSWORD must be set}
     depends_on:
       - discovery-server
     restart: on-failure
@@ -45,6 +49,8 @@ services:
     environment:
       spring.profiles.active: docker
       spring.cloud.config.uri: http://config-server:8888/config-server
+      CONFIG_SERVER_USERNAME: ${CONFIG_SERVER_USERNAME:-config-client}
+      CONFIG_SERVER_PASSWORD: ${CONFIG_SERVER_PASSWORD:?CONFIG_SERVER_PASSWORD must be set}
     depends_on:
       - asset-management-api-mysql
       - api-gateway
@@ -70,12 +76,12 @@ services:
     container_name: config-server
     image: 0145136798/config-server
     pull_policy: always
-    ports:
-      - "8888:8888"
     expose:
       - "8888"
     environment:
       spring.profiles.active: docker
+      CONFIG_SERVER_USERNAME: ${CONFIG_SERVER_USERNAME:-config-client}
+      CONFIG_SERVER_PASSWORD: ${CONFIG_SERVER_PASSWORD:?CONFIG_SERVER_PASSWORD must be set}
     volumes:
       - ./config-files:/app/resources/config-files
     depends_on:
@@ -92,6 +98,8 @@ services:
     environment:
       spring.profiles.active: docker
       spring.cloud.config.uri: http://config-server:8888/config-server
+      CONFIG_SERVER_USERNAME: ${CONFIG_SERVER_USERNAME:-config-client}
+      CONFIG_SERVER_PASSWORD: ${CONFIG_SERVER_PASSWORD:?CONFIG_SERVER_PASSWORD must be set}
     depends_on:
       - config-server
     restart: on-failure
@@ -117,6 +125,8 @@ services:
     environment:
       spring.profiles.active: docker
       spring.cloud.config.uri: http://config-server:8888/config-server
+      CONFIG_SERVER_USERNAME: ${CONFIG_SERVER_USERNAME:-config-client}
+      CONFIG_SERVER_PASSWORD: ${CONFIG_SERVER_PASSWORD:?CONFIG_SERVER_PASSWORD must be set}
     depends_on:
       - notification-api-kafka
       - api-gateway
@@ -170,6 +180,8 @@ services:
     environment:
       spring.profiles.active: docker
       spring.cloud.config.uri: http://config-server:8888/config-server
+      CONFIG_SERVER_USERNAME: ${CONFIG_SERVER_USERNAME:-config-client}
+      CONFIG_SERVER_PASSWORD: ${CONFIG_SERVER_PASSWORD:?CONFIG_SERVER_PASSWORD must be set}
     depends_on:
       - transaction-api-postgres
       - notification-api-kafka
