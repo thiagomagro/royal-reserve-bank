@@ -21,6 +21,7 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -115,5 +116,31 @@ class TransactionControllerTest {
                 .andExpect(request().asyncStarted()).andReturn();
         mvc.perform(asyncDispatch(result)).andExpect(status().isCreated())
                 .andExpect(content().string("Transaction completed successfully!"));
+    }
+
+    @Test
+    void returnsBusinessRejectionsAsBadRequest() throws Exception {
+        MockMvc mvc = MockMvcBuilders.standaloneSetup(transactionController).build();
+        for (String message : List.of("Asset is not available, please try again later", "Invalid transaction items")) {
+            when(transactionService.processTransaction(any(TransactionRequest.class)))
+                    .thenThrow(new IllegalArgumentException(message));
+            MvcResult result = mvc.perform(post("/api/transaction").contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"transactionItemsDtoList\":[{\"assetCode\":\"UNKNOWN\",\"value\":1}]}"))
+                    .andExpect(request().asyncStarted()).andReturn();
+            mvc.perform(asyncDispatch(result)).andExpect(status().isBadRequest())
+                    .andExpect(content().string(message));
+        }
+    }
+
+    @Test
+    void fallbackPreservesDirectAndWrappedBusinessRejections() {
+        for (String message : List.of("Asset is not available, please try again later", "Invalid transaction items")) {
+            IllegalArgumentException rejection = new IllegalArgumentException(message);
+            for (RuntimeException failure : List.of(rejection, new CompletionException(rejection))) {
+                CompletionException thrown = Assertions.assertThrows(CompletionException.class,
+                        () -> transactionController.fallbackMethod(request, failure).join());
+                Assertions.assertSame(rejection, thrown.getCause());
+            }
+        }
     }
 }
