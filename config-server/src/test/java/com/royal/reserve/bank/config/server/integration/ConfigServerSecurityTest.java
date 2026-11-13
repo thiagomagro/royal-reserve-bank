@@ -20,7 +20,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
         properties = {
                 "spring.security.user.password=test-secret",
                 "eureka.client.enabled=false",
-                "spring.cloud.config.server.native.searchLocations=file:../config-files"
+                "spring.cloud.config.server.native.searchLocations=file:../config-files",
+                "management.prometheus.metrics.export.enabled=true"
         })
 class ConfigServerSecurityTest {
 
