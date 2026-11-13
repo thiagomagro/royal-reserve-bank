@@ -7,6 +7,7 @@ import io.github.resilience4j.retry.annotation.Retry;
 import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,7 +35,7 @@ public class TransactionController {
     @CircuitBreaker(name = "asset-management", fallbackMethod = "fallbackMethod")
     @TimeLimiter(name = "asset-management")
     @Retry(name = "asset-management")
-    public CompletableFuture<String> processTransaction(@RequestBody TransactionRequest transactionRequest) {
+    public CompletableFuture<String> processTransaction(@Valid @RequestBody TransactionRequest transactionRequest) {
         log.info("Transaction processed.");
         return CompletableFuture.supplyAsync(() -> transactionService.processTransaction(transactionRequest));
     }
