@@ -26,14 +26,18 @@ import java.util.UUID;
 @Transactional
 public class TransactionService {
 
+    public static final int MAX_ASSET_CODE_LENGTH = 32;
+    public static final String ASSET_CODE_PATTERN = "[A-Za-z0-9-]+";
+
     private final TransactionRepository transactionRepository;
     private final AssetManagementClient assetManagementClient;
     private final KafkaTemplate<String, TransactionEvent> kafkaTemplate;
 
     @Transactional(readOnly = true)
     public List<TransactionItems> searchByAssetCode(String assetCode) {
-        if (assetCode == null || !assetCode.matches("[A-Za-z0-9]{1,32}")) {
-            throw new IllegalArgumentException("Asset code must contain 1 to 32 alphanumeric characters");
+        if (assetCode == null || assetCode.length() > MAX_ASSET_CODE_LENGTH
+                || !assetCode.matches(ASSET_CODE_PATTERN)) {
+            throw new IllegalArgumentException("Asset code must contain 1 to 32 letters, digits or hyphens");
         }
         return transactionRepository.findItemsByAssetCode(assetCode);
     }

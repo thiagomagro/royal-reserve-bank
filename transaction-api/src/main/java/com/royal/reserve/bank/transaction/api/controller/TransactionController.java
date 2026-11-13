@@ -33,8 +33,9 @@ public class TransactionController {
     private final TransactionService transactionService;
 
     @GetMapping("/search")
-    public List<TransactionItems> searchByAssetCode(@RequestParam @NotBlank @Size(max = 32)
-                                                   @Pattern(regexp = "[A-Za-z0-9]+") String assetCode) {
+    public List<TransactionItems> searchByAssetCode(@RequestParam @NotBlank
+                                                   @Size(max = TransactionService.MAX_ASSET_CODE_LENGTH)
+                                                   @Pattern(regexp = TransactionService.ASSET_CODE_PATTERN) String assetCode) {
         log.info("Searching transaction items by asset code.");
         return transactionService.searchByAssetCode(assetCode);
     }

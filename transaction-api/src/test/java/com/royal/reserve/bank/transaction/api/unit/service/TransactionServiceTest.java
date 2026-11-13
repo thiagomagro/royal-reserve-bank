@@ -50,6 +50,16 @@ class TransactionServiceTest {
     }
 
     @Test
+    void searchesTransactionItemsByHyphenatedAssetCode() {
+        transactionService = new TransactionService(transactionRepository, assetManagementClient, kafkaTemplate);
+        var items = Collections.singletonList(new TransactionItems(1L, "BOND-BR-2030", "Brazil Bond", 100));
+        when(transactionRepository.findItemsByAssetCode("BOND-BR-2030")).thenReturn(items);
+        assertEquals(items, transactionService.searchByAssetCode("BOND-BR-2030"));
+        verify(transactionRepository).findItemsByAssetCode("BOND-BR-2030");
+        verifyNoInteractions(assetManagementClient, kafkaTemplate);
+    }
+
+    @Test
     void returnsEmptySearchResults() {
         transactionService = new TransactionService(transactionRepository, assetManagementClient, kafkaTemplate);
         when(transactionRepository.findItemsByAssetCode("UNKNOWN")).thenReturn(Collections.emptyList());

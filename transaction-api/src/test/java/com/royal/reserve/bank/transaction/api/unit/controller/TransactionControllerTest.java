@@ -65,6 +65,19 @@ class TransactionControllerTest {
                 .andExpect(status().isOk()).andExpect(content().json("[]"));
     }
 
+    @Test
+    void acceptsHyphenatedSearchCodeThroughValidation() throws Exception {
+        try (LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean()) {
+            validator.afterPropertiesSet();
+            ProxyFactory proxy = new ProxyFactory(transactionController);
+            proxy.addAdvice(new MethodValidationInterceptor(validator.getValidator()));
+            when(transactionService.searchByAssetCode("BOND-BR-2030")).thenReturn(List.of());
+            MockMvcBuilders.standaloneSetup(proxy.getProxy()).build()
+                    .perform(get("/api/transaction/search").param("assetCode", "BOND-BR-2030"))
+                    .andExpect(status().isOk()).andExpect(content().json("[]"));
+        }
+    }
+
     @BeforeEach
     void setup() {
         TransactionItemsDto item1 = new TransactionItemsDto(1L, "AAPL", "Apple Inc.",
