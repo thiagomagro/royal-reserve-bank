@@ -1,16 +1,24 @@
 package com.royal.reserve.bank.transaction.api.controller;
 
 import com.royal.reserve.bank.transaction.api.dto.TransactionRequest;
+import com.royal.reserve.bank.transaction.api.model.TransactionItems;
 import com.royal.reserve.bank.transaction.api.service.TransactionService;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.List;
 
 /**
  * Controller class that handles HTTP requests related to transactions.
@@ -19,9 +27,23 @@ import java.util.concurrent.CompletableFuture;
 @RequestMapping("/api/transaction")
 @RequiredArgsConstructor
 @Slf4j
+@Validated
 public class TransactionController {
 
     private final TransactionService transactionService;
+
+    @GetMapping("/search")
+    public List<TransactionItems> searchByAssetCode(@RequestParam @NotBlank
+                                                   @Size(max = TransactionService.MAX_ASSET_CODE_LENGTH)
+                                                   @Pattern(regexp = TransactionService.ASSET_CODE_PATTERN) String assetCode) {
+        log.info("Searching transaction items by asset code.");
+        return transactionService.searchByAssetCode(assetCode);
+    }
+
+    @ExceptionHandler({IllegalArgumentException.class, ConstraintViolationException.class})
+    public ResponseEntity<String> handleInvalidSearch(RuntimeException exception) {
+        return ResponseEntity.badRequest().body(exception.getMessage());
+    }
 
     /**
      *
