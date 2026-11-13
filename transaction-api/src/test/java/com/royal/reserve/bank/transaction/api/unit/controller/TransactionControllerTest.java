@@ -11,6 +11,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.aop.framework.ProxyFactory;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
+import org.springframework.validation.beanvalidation.MethodValidationInterceptor;
 
 import java.util.Arrays;
 import java.util.List;
@@ -18,6 +22,10 @@ import java.util.concurrent.CompletableFuture;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
 /**
  * Unit tests for the {@link TransactionController} class.
@@ -32,6 +40,30 @@ class TransactionControllerTest {
     private TransactionController transactionController;
 
     private TransactionRequest request;
+
+    @Test
+    void rejectsInvalidSearchCodesWithBadRequest() throws Exception {
+        try (LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean()) {
+            validator.afterPropertiesSet();
+            ProxyFactory proxy = new ProxyFactory(transactionController);
+            proxy.addAdvice(new MethodValidationInterceptor(validator.getValidator()));
+            var mvc = MockMvcBuilders.standaloneSetup(proxy.getProxy()).build();
+            for (String assetCode : List.of("", " ", "A".repeat(33), "' OR 1=1 --")) {
+                mvc.perform(get("/api/transaction/search").param("assetCode", assetCode))
+                        .andExpect(status().isBadRequest());
+            }
+            mvc.perform(get("/api/transaction/search")).andExpect(status().isBadRequest());
+            verifyNoInteractions(transactionService);
+        }
+    }
+
+    @Test
+    void returnsSearchResultsForValidCode() throws Exception {
+        when(transactionService.searchByAssetCode("DVN")).thenReturn(List.of());
+        MockMvcBuilders.standaloneSetup(transactionController).build()
+                .perform(get("/api/transaction/search").param("assetCode", "DVN"))
+                .andExpect(status().isOk()).andExpect(content().json("[]"));
+    }
 
     @BeforeEach
     void setup() {

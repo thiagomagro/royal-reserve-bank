@@ -32,6 +32,9 @@ public class TransactionService {
 
     @Transactional(readOnly = true)
     public List<TransactionItems> searchByAssetCode(String assetCode) {
+        if (assetCode == null || !assetCode.matches("[A-Za-z0-9]{1,32}")) {
+            throw new IllegalArgumentException("Asset code must contain 1 to 32 alphanumeric characters");
+        }
         return transactionRepository.findItemsByAssetCode(assetCode);
     }
 

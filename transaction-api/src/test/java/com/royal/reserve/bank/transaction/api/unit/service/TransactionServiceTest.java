@@ -66,6 +66,15 @@ class TransactionServiceTest {
         verifyNoInteractions(assetManagementClient, kafkaTemplate);
     }
 
+    @Test
+    void rejectsInvalidSearchCodesBeforeQuerying() {
+        transactionService = new TransactionService(transactionRepository, assetManagementClient, kafkaTemplate);
+        for (String assetCode : java.util.Arrays.asList(null, "", " ", "A".repeat(33), "' OR 1=1 --")) {
+            assertThrows(IllegalArgumentException.class, () -> transactionService.searchByAssetCode(assetCode));
+        }
+        verifyNoInteractions(transactionRepository, assetManagementClient, kafkaTemplate);
+    }
+
     /**
      * Test method for {@link TransactionService#processTransaction(TransactionRequest)}.
      */

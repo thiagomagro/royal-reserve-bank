@@ -12,9 +12,8 @@ public class TransactionSearchRepositoryImpl implements TransactionSearchReposit
 
     @Override
     public List<TransactionItems> findItemsByAssetCode(String assetCode) {
-        String sql = "SELECT id, asset_code, asset_name, value FROM t_transaction_items WHERE asset_code = '"
-                + assetCode + "'";
+        String sql = "SELECT id, asset_code, asset_name, value FROM t_transaction_items WHERE asset_code = ?";
         return jdbcTemplate.query(sql, (row, index) -> new TransactionItems(
-                row.getLong("id"), row.getString("asset_code"), row.getString("asset_name"), row.getInt("value")));
+                row.getLong("id"), row.getString("asset_code"), row.getString("asset_name"), row.getInt("value")), assetCode);
     }
 }
