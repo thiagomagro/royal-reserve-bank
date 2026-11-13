@@ -46,11 +46,11 @@ public class TransactionController {
      *
      *Circuit breaker implementation. Fallback method to handle exceptions during transaction processing.
      *@param transactionRequest The transaction request object.
-     *@param runtimeException The exception that occurred during transaction processing.
+     *@param throwable The exception that occurred during transaction processing.
      *@return A CompletableFuture representing a fallback message.
      */
-    public CompletableFuture<String> fallbackMethod(TransactionRequest transactionRequest, RuntimeException runtimeException) {
-        Throwable cause = runtimeException;
+    public CompletableFuture<String> fallbackMethod(TransactionRequest transactionRequest, Throwable throwable) {
+        Throwable cause = throwable;
         while (cause instanceof CompletionException && cause.getCause() != null) {
             cause = cause.getCause();
         }

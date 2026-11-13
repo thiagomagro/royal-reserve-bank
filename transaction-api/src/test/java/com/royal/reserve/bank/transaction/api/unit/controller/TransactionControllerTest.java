@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.TimeoutException;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -71,7 +72,7 @@ class TransactionControllerTest {
     }
 
     /**
-     * Test for the {@link TransactionController#fallbackMethod(TransactionRequest, RuntimeException)} method.
+     * Test for the {@link TransactionController#fallbackMethod(TransactionRequest, Throwable)} method.
      */
     @Test
     void testFallbackMethod() {
@@ -84,6 +85,12 @@ class TransactionControllerTest {
 
         // Then
         Assertions.assertEquals(expectedFallbackResponse, result.join());
+    }
+
+    @Test
+    void fallbackHandlesTimeoutException() {
+        Assertions.assertEquals("Oops! Something went wrong, please try again later!",
+                transactionController.fallbackMethod(request, new TimeoutException("Asset management timed out")).join());
     }
 
     @Test
