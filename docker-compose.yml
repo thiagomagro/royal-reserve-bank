@@ -86,7 +86,7 @@ services:
     container_name: discovery-server
     pull_policy: always
     ports:
-      - "8761:8761"
+      - "127.0.0.1:8761:8761"
     expose:
       - "8761"
     environment:

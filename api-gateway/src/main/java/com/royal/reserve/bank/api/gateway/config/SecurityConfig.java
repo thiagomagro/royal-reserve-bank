@@ -61,10 +61,7 @@ public class SecurityConfig {
                 .and()
                 .and()
                 .authorizeExchange(exchange ->
-                        exchange.pathMatchers("/eureka/**", "/discovery-server/**")
-                                .permitAll()
-                                .anyExchange()
-                                .authenticated());
+                        exchange.anyExchange().authenticated());
         return serverHttpSecurity.build();
     }
 
