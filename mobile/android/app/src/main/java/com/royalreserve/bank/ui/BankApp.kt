@@ -22,6 +22,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -41,6 +42,14 @@ import com.royalreserve.bank.ui.screens.SettingsViewModel
 import com.royalreserve.bank.ui.screens.Transaction
 import com.royalreserve.bank.ui.screens.TransactionViewModel
 import com.royalreserve.bank.ui.theme.BankTheme
+
+private fun NavHostController.navigateToTab(route: String) {
+    navigate(route) {
+        popUpTo(graph.startDestinationId) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
+    }
+}
 
 @Composable
 private inline fun <reified T : ViewModel> screenModel(crossinline create: () -> T): T =
@@ -74,13 +83,7 @@ fun BankApp(settings: SettingsRepository, repo: BankRepository, store: AccountsS
                     destinations.forEachIndexed { i, title ->
                         NavigationBarItem(
                             selected = current?.destination?.route == title,
-                            onClick = {
-                                nav.navigate(title) {
-                                    popUpTo(nav.graph.startDestinationId) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
+                            onClick = { nav.navigateToTab(title) },
                             icon = { Icon(icons[i], contentDescription = title) },
                             label = { NavigationLabel(title) },
                             modifier = Modifier.testTag("nav_$title"),
@@ -92,7 +95,7 @@ fun BankApp(settings: SettingsRepository, repo: BankRepository, store: AccountsS
             NavHost(nav, "Dashboard", Modifier.padding(padding)) {
                 composable("Dashboard") {
                     val vm = screenModel { DashboardViewModel(store) }
-                    Dashboard(vm) { nav.navigate(it) }
+                    Dashboard(vm) { nav.navigateToTab(it) }
                 }
                 composable("Accounts") {
                     Accounts(screenModel { AccountsViewModel(repo::api, store) })
