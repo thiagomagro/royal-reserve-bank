@@ -19,6 +19,19 @@ seed data and offline behavior is [the mobile API contract](../docs/mobile-api-c
 It explicitly distinguishes existing web behavior from mobile configuration
 requirements and backend behavior from mock behavior.
 
-This foundation contains documentation only. Android/iOS projects, dependency
-versions, build commands, signing and platform runtime verification will be
-added with their respective implementations. No shared web wrapper is planned.
+## Android
+
+`android/` is a native Kotlin/Jetpack Compose app (Android 8+, JDK 17,
+Android SDK 35). With `ANDROID_HOME` pointing to your SDK:
+
+```sh
+cd mobile/android
+./gradlew --no-daemon testDebugUnitTest assembleDebug lintDebug
+```
+
+Install `app/build/outputs/apk/debug/app-debug.apk` on a device or emulator.
+Offline mock mode defaults on; Settings can switch to a gateway (emulator host:
+`http://10.0.2.2:8080`) and save a pasted Bearer token. Mock accounts are
+in-memory and reset when the process restarts. Tokens are stored in private app
+preferences for this demo; do not use production credentials. Debug builds use
+the Android debug signing key. No shared web wrapper is used.
