@@ -56,17 +56,20 @@ final class AppStore: ObservableObject {
         }
         loading = false
     }
-    func show(_ text: String, error: Bool = false) {
+    @discardableResult
+    func show(_ text: String, error: Bool = false) -> Task<Void, Never> {
         noticeTask?.cancel()
         notice = text
         noticeIsError = error
-        noticeTask = Task { [weak self, noticeDelay] in
+        let task = Task { [weak self, noticeDelay] in
             do {
                 try await noticeDelay()
                 try Task.checkCancellation()
                 self?.dismissNotice()
             } catch {}
         }
+        noticeTask = task
+        return task
     }
     func dismissNotice() {
         noticeTask?.cancel()

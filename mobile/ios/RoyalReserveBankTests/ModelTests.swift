@@ -8,11 +8,11 @@ final class ModelTests: XCTestCase {
         let store = AppStore(settings: AppSettings(), noticeDelay: {
             await withCheckedContinuation { finish = $0; waiting.fulfill() }
         })
-        store.show("Success")
+        let timer = store.show("Success")
         await fulfillment(of: [waiting])
         XCTAssertEqual(store.notice, "Success")
         finish?.resume()
-        await storeNoticeTaskSettles()
+        await timer.value
         XCTAssertNil(store.notice)
     }
     @MainActor func testNewNoticeResetsTimerAndIgnoresOldCompletion() async {
@@ -25,16 +25,16 @@ final class ModelTests: XCTestCase {
                 (timers.count == 1 ? first : second).fulfill()
             }
         })
-        store.show("First")
+        let firstTimer = store.show("First")
         await fulfillment(of: [first])
-        store.show("Replacement", error: true)
+        let secondTimer = store.show("Replacement", error: true)
         await fulfillment(of: [second])
         timers[0].resume()
-        await storeNoticeTaskSettles()
+        await firstTimer.value
         XCTAssertEqual(store.notice, "Replacement")
         XCTAssertTrue(store.noticeIsError)
         timers[1].resume()
-        await storeNoticeTaskSettles()
+        await secondTimer.value
         XCTAssertNil(store.notice)
     }
     @MainActor func testManualNoticeDismissalCancelsPendingTimer() async {
@@ -43,17 +43,13 @@ final class ModelTests: XCTestCase {
         let store = AppStore(settings: AppSettings(), noticeDelay: {
             await withCheckedContinuation { finish = $0; waiting.fulfill() }
         })
-        store.show("Success")
+        let timer = store.show("Success")
         await fulfillment(of: [waiting])
         store.dismissNotice()
         XCTAssertNil(store.notice)
         finish?.resume()
-        await storeNoticeTaskSettles()
+        await timer.value
         XCTAssertNil(store.notice)
-    }
-    @MainActor private func storeNoticeTaskSettles() async {
-        // Drain work queued on the main actor after the controlled delay completes.
-        await Task { @MainActor in }.value
     }
     func testAssetKeyNormalization() throws {
         for (json, expected) in [
