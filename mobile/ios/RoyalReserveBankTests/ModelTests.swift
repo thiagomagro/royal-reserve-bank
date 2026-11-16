@@ -2,6 +2,59 @@ import XCTest
 @testable import RoyalReserveBank
 
 final class ModelTests: XCTestCase {
+    @MainActor func testNoticeDismissesAfterDelay() async {
+        let waiting = expectation(description: "Timer started")
+        var finish: CheckedContinuation<Void, Never>?
+        let store = AppStore(settings: AppSettings(), noticeDelay: {
+            await withCheckedContinuation { finish = $0; waiting.fulfill() }
+        })
+        store.show("Success")
+        await fulfillment(of: [waiting])
+        XCTAssertEqual(store.notice, "Success")
+        finish?.resume()
+        await storeNoticeTaskSettles()
+        XCTAssertNil(store.notice)
+    }
+    @MainActor func testNewNoticeResetsTimerAndIgnoresOldCompletion() async {
+        let first = expectation(description: "First timer")
+        let second = expectation(description: "Replacement timer")
+        var timers: [CheckedContinuation<Void, Never>] = []
+        let store = AppStore(settings: AppSettings(), noticeDelay: {
+            await withCheckedContinuation {
+                timers.append($0)
+                (timers.count == 1 ? first : second).fulfill()
+            }
+        })
+        store.show("First")
+        await fulfillment(of: [first])
+        store.show("Replacement", error: true)
+        await fulfillment(of: [second])
+        timers[0].resume()
+        await storeNoticeTaskSettles()
+        XCTAssertEqual(store.notice, "Replacement")
+        XCTAssertTrue(store.noticeIsError)
+        timers[1].resume()
+        await storeNoticeTaskSettles()
+        XCTAssertNil(store.notice)
+    }
+    @MainActor func testManualNoticeDismissalCancelsPendingTimer() async {
+        let waiting = expectation(description: "Timer started")
+        var finish: CheckedContinuation<Void, Never>?
+        let store = AppStore(settings: AppSettings(), noticeDelay: {
+            await withCheckedContinuation { finish = $0; waiting.fulfill() }
+        })
+        store.show("Success")
+        await fulfillment(of: [waiting])
+        store.dismissNotice()
+        XCTAssertNil(store.notice)
+        finish?.resume()
+        await storeNoticeTaskSettles()
+        XCTAssertNil(store.notice)
+    }
+    @MainActor private func storeNoticeTaskSettles() async {
+        // Drain work queued on the main actor after the controlled delay completes.
+        await Task { @MainActor in }.value
+    }
     func testAssetKeyNormalization() throws {
         for (json, expected) in [
             (#"{"assetCode":"X","isAssetAvailable":false,"assetAvailable":true}"#, false),

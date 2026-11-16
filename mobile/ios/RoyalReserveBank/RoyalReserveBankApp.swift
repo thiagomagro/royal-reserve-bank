@@ -35,22 +35,22 @@ struct RootView: View {
                 .tabItem { Label("settings.title".localized, systemImage: "gearshape") }.tag(4)
         }
         .safeAreaInset(edge: .top, spacing: 0) {
-            HStack(spacing: 10) {
-                Image(systemName: "building.columns.fill").foregroundStyle(.yellow)
-                Text("app.brand".localized).font(.headline)
-                Spacer()
-            }.padding().foregroundStyle(.white).background(Color(red: 0.06, green: 0.09, blue: 0.16))
-        }
-        .safeAreaInset(edge: .bottom) {
-            if let notice = store.notice {
-                HStack {
-                    Image(systemName: store.noticeIsError ? "exclamationmark.circle" : "checkmark.circle")
-                    Text(notice).font(.subheadline)
+            VStack(spacing: 0) {
+                HStack(spacing: 10) {
+                    Image(systemName: "building.columns.fill").foregroundStyle(.yellow)
+                    Text("app.brand".localized).font(.headline)
                     Spacer()
-                    Button { store.notice = nil } label: { Image(systemName: "xmark") }
-                        .accessibilityLabel("common.dismiss".localized).accessibilityIdentifier("notice.dismiss")
-                }.padding().foregroundStyle(store.noticeIsError ? Color.red : Color.green)
-                    .background(.regularMaterial).accessibilityIdentifier("notice.banner")
+                }.padding().foregroundStyle(.white).background(Color(red: 0.06, green: 0.09, blue: 0.16))
+                if let notice = store.notice {
+                    HStack {
+                        Image(systemName: store.noticeIsError ? "exclamationmark.circle" : "checkmark.circle")
+                        Text(notice).font(.subheadline)
+                        Spacer()
+                        Button { store.dismissNotice() } label: { Image(systemName: "xmark") }
+                            .accessibilityLabel("common.dismiss".localized).accessibilityIdentifier("notice.dismiss")
+                    }.padding().foregroundStyle(store.noticeIsError ? Color.red : Color.green)
+                        .background(.regularMaterial).accessibilityIdentifier("notice.banner")
+                }
             }
         }
         .task { await store.refresh() }

@@ -28,13 +28,21 @@ final class AppStore: ObservableObject {
     @Published var accounts: [Account] = []
     @Published var loading = false
     @Published var loadError: String?
-    @Published var notice: String?
+    @Published private(set) var notice: String?
     @Published var noticeIsError = false
     private var refreshID = UUID()
+    private var noticeTask: Task<Void, Never>?
+    private let noticeDelay: @MainActor () async throws -> Void
     var client: any APIClient {
         settings.mockMode ? mock : RemoteAPIClient(baseURL: settings.baseURL, token: settings.token)
     }
-    init(settings: AppSettings) { self.settings = settings }
+    init(settings: AppSettings, noticeDelay: @escaping @MainActor () async throws -> Void = {
+        try await Task.sleep(for: .seconds(5))
+    }) {
+        self.settings = settings
+        self.noticeDelay = noticeDelay
+    }
+    deinit { noticeTask?.cancel() }
     func refresh() async {
         let id = UUID(); refreshID = id
         loading = true; loadError = nil
@@ -48,6 +56,22 @@ final class AppStore: ObservableObject {
         }
         loading = false
     }
-    func show(_ text: String, error: Bool = false) { notice = text; noticeIsError = error }
+    func show(_ text: String, error: Bool = false) {
+        noticeTask?.cancel()
+        notice = text
+        noticeIsError = error
+        noticeTask = Task { [weak self, noticeDelay] in
+            do {
+                try await noticeDelay()
+                try Task.checkCancellation()
+                self?.dismissNotice()
+            } catch {}
+        }
+    }
+    func dismissNotice() {
+        noticeTask?.cancel()
+        noticeTask = nil
+        notice = nil
+    }
     func fail(_ error: Error, fallback: String) { show((error as? APIError)?.body ?? fallback.localizedString, error: true) }
 }
