@@ -5,7 +5,7 @@ Planned layout (applications are not scaffolded yet):
 ```text
 mobile/
   android/   # Kotlin, Jetpack Compose
-  ios/       # SwiftUI
+  ios/       # SwiftUI implemented; see ios/README.md for build/test/run commands
 ```
 
 Both applications use an English UI and reproduce the web's Dashboard,
