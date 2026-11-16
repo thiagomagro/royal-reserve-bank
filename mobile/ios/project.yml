@@ -1,0 +1,45 @@
+name: RoyalReserveBank
+options:
+  deploymentTarget:
+    iOS: '17.0'
+  xcodeVersion: '16.0'
+  developmentLanguage: en
+settings:
+  base:
+    SWIFT_VERSION: '5.0'
+    CODE_SIGNING_ALLOWED: NO
+targets:
+  RoyalReserveBank:
+    type: application
+    platform: iOS
+    sources: [RoyalReserveBank]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.royalreservebank.ios
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoads: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        TARGETED_DEVICE_FAMILY: '1,2'
+    info:
+      path: RoyalReserveBank/Info.plist
+      properties:
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: true
+        UILaunchScreen: {}
+  RoyalReserveBankTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources: [RoyalReserveBankTests]
+    dependencies:
+      - target: RoyalReserveBank
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  RoyalReserveBank:
+    build:
+      targets:
+        RoyalReserveBank: all
+    test:
+      targets: [RoyalReserveBankTests]
