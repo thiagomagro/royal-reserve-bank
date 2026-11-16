@@ -108,6 +108,7 @@ The key architectural patterns used in the project include:
 ### To run the microservices within Docker:
 
 - Clone the repository and navigate to the project directory.
+- Before starting Docker Compose, run `cp .env.example .env` and fill in the values. Generate a strong, unique database password; the Eureka credentials must match discovery-server's `spring.security.user.*` settings. When running transaction-api outside Docker, export the same four variables.
 - Start the microservices using Docker Compose by running the command `docker-compose up -d`.
 - To stop the microservices, run the command `docker-compose down`.
 
