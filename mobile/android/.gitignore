@@ -4,3 +4,5 @@ local.properties
 **/build/
 .idea/
 *.iml
+!app/src/main/java/com/royalreserve/bank/data/
+!app/src/test/java/com/royalreserve/bank/data/
