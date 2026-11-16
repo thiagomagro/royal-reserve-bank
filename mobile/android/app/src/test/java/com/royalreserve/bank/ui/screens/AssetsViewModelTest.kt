@@ -42,6 +42,38 @@ class AssetsViewModelTest {
     }
 
     @Test
+    fun successfulLookupClearsPreviousValidationBanner() = runTest {
+        val vm = AssetsViewModel { MockBankApi() }
+        vm.check()
+        assertEquals("Enter at least one asset code.", vm.banner!!.text)
+
+        vm.input = "AAPL"
+        vm.check()
+        advanceUntilIdle()
+
+        assertNull(vm.banner)
+        assertEquals(listOf(AssetAvailability("AAPL", true)), vm.results)
+    }
+
+    @Test
+    fun emptySuccessfulLookupClearsBannerAndReplacesOldResults() = runTest {
+        val api =
+            object : BankApi by MockBankApi() {
+                override suspend fun assets(codes: List<String>) = emptyList<AssetAvailability>()
+            }
+        val vm = AssetsViewModel { api }
+        vm.results = listOf(AssetAvailability("AAPL", true))
+        vm.notify("Previous error", true)
+        vm.input = "unknown"
+
+        vm.check()
+        advanceUntilIdle()
+
+        assertNull(vm.banner)
+        assertTrue(vm.results.isEmpty())
+    }
+
+    @Test
     fun failurePreservesPriorResultsAndShowsRawError() = runTest {
         val api =
             object : BankApi by MockBankApi() {

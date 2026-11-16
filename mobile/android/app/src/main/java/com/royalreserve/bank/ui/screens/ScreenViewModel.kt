@@ -22,6 +22,7 @@ open class ScreenViewModel : ViewModel() {
         if (pending) return
         viewModelScope.launch {
             pending = true
+            banner = null
             try {
                 block()
             } catch (e: Exception) {

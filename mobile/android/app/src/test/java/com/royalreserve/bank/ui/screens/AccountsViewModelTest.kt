@@ -25,6 +25,8 @@ class AccountsViewModelTest {
         val vm = AccountsViewModel({ api }, store)
         advanceUntilIdle()
         assertEquals(1, api.accountReads)
+        vm.create()
+        assertTrue(vm.banner!!.error)
         vm.creating = true
         vm.holder = " Jane "
         vm.balance = "12.50"
@@ -49,6 +51,8 @@ class AccountsViewModelTest {
         val vm = AccountsViewModel({ api }, store)
         advanceUntilIdle()
         vm.depositTarget = store.state.value.accounts.first()
+        vm.deposit()
+        assertTrue(vm.banner!!.error)
         vm.amount = "25.50"
         vm.deposit()
         advanceUntilIdle()

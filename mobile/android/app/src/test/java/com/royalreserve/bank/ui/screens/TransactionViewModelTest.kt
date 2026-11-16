@@ -41,6 +41,8 @@ class TransactionViewModelTest {
     @Test
     fun successDoesNotRequireAvailabilityCheckOrResetRows() = runTest {
         val vm = TransactionViewModel { MockBankApi() }
+        vm.submit()
+        assertTrue(vm.banner!!.error)
         val rows = listOf(ItemRow("AAPL", "Apple", "2"), ItemRow("PETR4"))
         vm.rows = rows
         vm.submit()
@@ -48,6 +50,36 @@ class TransactionViewModelTest {
         assertEquals("Transaction placed successfully.", vm.banner!!.text)
         assertFalse(vm.banner!!.error)
         assertEquals(rows, vm.rows)
+    }
+
+    @Test
+    fun successfulAvailabilityCheckClearsPreviousValidationBanner() = runTest {
+        val vm = TransactionViewModel { MockBankApi() }
+        vm.check()
+        assertEquals("Enter at least one asset code first.", vm.banner!!.text)
+
+        vm.rows = listOf(ItemRow("AAPL"))
+        vm.check()
+        advanceUntilIdle()
+
+        assertNull(vm.banner)
+        assertEquals(true, vm.rows.single().availability)
+    }
+
+    @Test
+    fun successfulAvailabilityCheckClearsPreviousOopsBanner() = runTest {
+        val vm = TransactionViewModel { MockBankApi() }
+        vm.rows = listOf(ItemRow("missing"))
+        vm.submit()
+        advanceUntilIdle()
+        assertTrue(vm.banner!!.error)
+
+        vm.rows = listOf(ItemRow("AAPL"))
+        vm.check()
+        advanceUntilIdle()
+
+        assertNull(vm.banner)
+        assertEquals(true, vm.rows.single().availability)
     }
 
     @Test

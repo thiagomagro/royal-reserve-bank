@@ -9,7 +9,6 @@ import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -30,6 +29,7 @@ import androidx.navigation.compose.rememberNavController
 import com.royalreserve.bank.data.AccountsStore
 import com.royalreserve.bank.data.BankRepository
 import com.royalreserve.bank.data.SettingsRepository
+import com.royalreserve.bank.ui.components.NavigationLabel
 import com.royalreserve.bank.ui.screens.Accounts
 import com.royalreserve.bank.ui.screens.AccountsViewModel
 import com.royalreserve.bank.ui.screens.Assets
@@ -82,13 +82,7 @@ fun BankApp(settings: SettingsRepository, repo: BankRepository, store: AccountsS
                                 }
                             },
                             icon = { Icon(icons[i], contentDescription = title) },
-                            label = {
-                                Text(
-                                    title,
-                                    maxLines = 1,
-                                    style = MaterialTheme.typography.labelSmall,
-                                )
-                            },
+                            label = { NavigationLabel(title) },
                             modifier = Modifier.testTag("nav_$title"),
                         )
                     }
